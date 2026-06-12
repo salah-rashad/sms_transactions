@@ -30,7 +30,7 @@ class TransactionProvider extends ChangeNotifier {
 
   double get totalExpense => rawExpense - totalSavings;
 
-  double get currentBalance => totalIncome - totalExpense;
+  double get currentBalance => totalIncome - totalExpense - totalSavings;
 
   List<Account> get accounts {
     final bankTxns = _transactions
@@ -100,45 +100,97 @@ class TransactionProvider extends ChangeNotifier {
     return t.date;
   }
 
-  Map<String, ({double income, double expense, double salary, double savings})> get monthlyBreakdown {
+  Map<String, ({double income, double expense, double savings})> get monthlyBreakdown {
     final savingsMap = <String, double>{};
     for (final c in _moneyPool.contributions) {
       final key = '${c.date.year}-${c.date.month.toString().padLeft(2, '0')}';
       savingsMap[key] = (savingsMap[key] ?? 0.0) + c.amount;
     }
 
-    final map = <String, ({double income, double expense, double salary, double savings})>{};
+    final map = <String, ({double income, double expense, double savings})>{};
 
     for (final t in _transactions) {
       if (t.type == TransactionType.balanceCheck) continue;
-      final effectiveDate = _effectiveMonthDate(t);
-      final key =
-          '${effectiveDate.year}-${effectiveDate.month.toString().padLeft(2, '0')}';
-      final existing = map[key] ?? (income: 0.0, expense: 0.0, salary: 0.0, savings: 0.0);
+      final key = '${t.date.year}-${t.date.month.toString().padLeft(2, '0')}';
+      final existing = map[key] ?? (income: 0.0, expense: 0.0, savings: 0.0);
       if (t.type == TransactionType.income) {
         map[key] = (
           income: existing.income + t.amount,
           expense: existing.expense,
-          salary: existing.salary + (_isSalary(t) ? t.amount : 0.0),
           savings: existing.savings,
         );
       } else {
         map[key] = (
           income: existing.income,
           expense: existing.expense + t.amount,
-          salary: existing.salary,
           savings: existing.savings,
         );
       }
     }
 
     for (final entry in savingsMap.entries) {
-      final existing = map[entry.key] ?? (income: 0.0, expense: 0.0, salary: 0.0, savings: 0.0);
+      final existing = map[entry.key] ?? (income: 0.0, expense: 0.0, savings: 0.0);
       map[entry.key] = (
         income: existing.income,
         expense: existing.expense - entry.value,
-        salary: existing.salary,
         savings: existing.savings + entry.value,
+      );
+    }
+
+    final sortedKeys = map.keys.toList()..sort((a, b) => b.compareTo(a));
+    return {for (final k in sortedKeys) k: map[k]!};
+  }
+
+  Map<String, ({double salary, double otherIncome, double expense, double savings, double remaining, DateTime cycleStart, DateTime? cycleEnd})> get salaryBasedBreakdown {
+    final salaryTxns = _transactions
+        .where((t) => _isSalary(t))
+        .toList()
+        ..sort((a, b) => a.date.compareTo(b.date));
+
+    if (salaryTxns.isEmpty) return {};
+
+    final map = <String, ({double salary, double otherIncome, double expense, double savings, double remaining, DateTime cycleStart, DateTime? cycleEnd})>{};
+
+    for (int i = 0; i < salaryTxns.length; i++) {
+      final salaryTxn = salaryTxns[i];
+      final cycleStart = salaryTxn.date;
+      final cycleEnd = i + 1 < salaryTxns.length ? salaryTxns[i + 1].date : null;
+
+      final key =
+          '${cycleStart.year}-${cycleStart.month.toString().padLeft(2, '0')}-${cycleStart.day.toString().padLeft(2, '0')}';
+
+      double otherIncome = 0;
+      double expense = 0;
+
+      for (final t in _transactions) {
+        if (t.type == TransactionType.balanceCheck) continue;
+        if (t.date.isBefore(cycleStart)) continue;
+        if (cycleEnd != null && !t.date.isBefore(cycleEnd)) continue;
+
+        if (t.type == TransactionType.income && !_isSalary(t)) {
+          otherIncome += t.amount;
+        } else if (t.type == TransactionType.expense) {
+          expense += t.amount;
+        }
+      }
+
+      double savings = 0;
+      for (final c in _moneyPool.contributions) {
+        if (c.date.isBefore(cycleStart)) continue;
+        if (cycleEnd != null && !c.date.isBefore(cycleEnd)) continue;
+        savings += c.amount;
+      }
+
+      expense -= savings;
+
+      map[key] = (
+        salary: salaryTxn.amount,
+        otherIncome: otherIncome,
+        expense: expense,
+        savings: savings,
+        remaining: salaryTxn.amount - expense - savings,
+        cycleStart: cycleStart,
+        cycleEnd: cycleEnd,
       );
     }
 

@@ -75,9 +75,7 @@ class TransactionCard extends StatelessWidget {
             ],
           ),
           subtitle: Text(
-            isIncome
-                ? '${_formatDate(transaction.date)}  ·  Long press to mark as salary'
-                : _formatDate(transaction.date),
+            _formatDate(transaction.date),
             style: TextStyle(color: Colors.grey[600], fontSize: 12),
           ),
           trailing: Column(

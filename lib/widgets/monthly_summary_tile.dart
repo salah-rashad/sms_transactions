@@ -5,7 +5,6 @@ class MonthlySummaryTile extends StatelessWidget {
   final String monthLabel;
   final double income;
   final double expense;
-  final double salary;
   final double savings;
 
   const MonthlySummaryTile({
@@ -13,7 +12,6 @@ class MonthlySummaryTile extends StatelessWidget {
     required this.monthLabel,
     required this.income,
     required this.expense,
-    required this.salary,
     required this.savings,
   });
 
@@ -34,16 +32,6 @@ class MonthlySummaryTile extends StatelessWidget {
               ),
             ),
             const Divider(),
-            if (salary > 0)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: CurrencyText(
-                  amount: salary,
-                  color: Colors.indigo,
-                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-                  prefix: 'Salary: ',
-                ),
-              ),
             if (savings > 0)
               Padding(
                 padding: const EdgeInsets.only(bottom: 12),

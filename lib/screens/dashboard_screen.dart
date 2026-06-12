@@ -4,10 +4,21 @@ import 'package:intl/intl.dart';
 import '../providers/transaction_provider.dart';
 import '../widgets/stats_card.dart';
 import '../widgets/monthly_summary_tile.dart';
+import '../widgets/salary_summary_tile.dart';
 import '../widgets/currency_text.dart';
+import 'salary_cycle_screen.dart';
 
-class DashboardScreen extends StatelessWidget {
+enum _SummaryView { overview, salary }
+
+class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
+
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  _SummaryView _summaryView = _SummaryView.overview;
 
   @override
   Widget build(BuildContext context) {
@@ -105,9 +116,9 @@ class DashboardScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 16),
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16),
-                  child: Text(
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: const Text(
                     'Monthly Summary',
                     style: TextStyle(
                       fontSize: 18,
@@ -115,20 +126,68 @@ class DashboardScreen extends StatelessWidget {
                     ),
                   ),
                 ),
+                const SizedBox(height: 16),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: SegmentedButton<_SummaryView>(
+                    showSelectedIcon: false,
+                    segments: const [
+                      ButtonSegment(
+                        value: _SummaryView.overview,
+                        label: Text('Overview'),
+                        icon: Icon(Icons.bar_chart),
+                      ),
+                      ButtonSegment(
+                        value: _SummaryView.salary,
+                        label: Text('Salary'),
+                        icon: Icon(Icons.payments),
+                      ),
+                    ],
+                    selected: {_summaryView},
+                    onSelectionChanged: (s) =>
+                        setState(() => _summaryView = s.first),
+                    style: const ButtonStyle(
+                      visualDensity: VisualDensity.compact,
+                    ),
+                  ),
+                ),
                 const SizedBox(height: 8),
-                    ...provider.monthlyBreakdown.entries.map((entry) {
-                  final parts = entry.key.split('-');
-                  final date = DateTime(
-                      int.parse(parts[0]), int.parse(parts[1]));
-                  final label = DateFormat.yMMMM().format(date);
-                  return MonthlySummaryTile(
-                    monthLabel: label,
-                    income: entry.value.income,
-                    expense: entry.value.expense,
-                    salary: entry.value.salary,
-                    savings: entry.value.savings,
-                  );
-                }),
+                if (_summaryView == _SummaryView.overview)
+                  ...provider.monthlyBreakdown.entries.map((entry) {
+                    final parts = entry.key.split('-');
+                    final date = DateTime(
+                        int.parse(parts[0]), int.parse(parts[1]));
+                    final label = DateFormat.yMMMM().format(date);
+                    return MonthlySummaryTile(
+                      monthLabel: label,
+                      income: entry.value.income,
+                      expense: entry.value.expense,
+                      savings: entry.value.savings,
+                    );
+                  })
+                else
+                  ...provider.salaryBasedBreakdown.entries.map((entry) {
+                    final v = entry.value;
+                    return SalarySummaryTile(
+                      salary: v.salary,
+                      otherIncome: v.otherIncome,
+                      expense: v.expense,
+                      savings: v.savings,
+                      remaining: v.remaining,
+                      cycleStart: v.cycleStart,
+                      cycleEnd: v.cycleEnd,
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => SalaryCycleScreen(
+                            cycleStart: v.cycleStart,
+                            cycleEnd: v.cycleEnd,
+                            title: DateFormat.yMMMM().format(v.cycleStart),
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
                 const SizedBox(height: 80),
               ],
             ),
