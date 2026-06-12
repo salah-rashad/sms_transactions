@@ -5,35 +5,140 @@ import '../providers/transaction_provider.dart';
 import '../models/money_pool.dart';
 import '../widgets/currency_text.dart';
 
-class MoneyPoolScreen extends StatelessWidget {
+class MoneyPoolScreen extends StatefulWidget {
   const MoneyPoolScreen({super.key});
+
+  @override
+  State<MoneyPoolScreen> createState() => _MoneyPoolScreenState();
+}
+
+class _MoneyPoolScreenState extends State<MoneyPoolScreen> {
+  bool _isLocked = true;
+
+  void _toggleLock() {
+    setState(() => _isLocked = !_isLocked);
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Money Pool (جمعية)')),
+      appBar: AppBar(
+        title: const Text('Money Pool (جمعية)'),
+        actions: [
+          IconButton(
+            onPressed: _toggleLock,
+            icon: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              transitionBuilder: (child, animation) {
+                return ScaleTransition(scale: animation, child: child);
+              },
+              child: Icon(
+                _isLocked ? Icons.lock_outline : Icons.lock_open_outlined,
+                key: ValueKey(_isLocked),
+              ),
+            ),
+            tooltip: _isLocked ? 'Unlock to edit' : 'Lock screen',
+          ),
+        ],
+      ),
       body: Consumer<TransactionProvider>(
         builder: (context, provider, _) {
           final pool = provider.moneyPool;
 
-          return ListView(
-            padding: const EdgeInsets.all(12),
+          return Stack(
             children: [
-              _buildOverviewCard(context, pool),
-              const SizedBox(height: 16),
-              _buildNextPayoutCard(context, pool),
-              const SizedBox(height: 16),
-              _buildContributionsSection(context, provider, pool),
-              const SizedBox(height: 16),
-              _buildPayoutScheduleSection(context, provider, pool),
-              const SizedBox(height: 80),
+              ListView(
+                padding: const EdgeInsets.all(12),
+                children: [
+                  _buildOverviewCard(context, pool),
+                  const SizedBox(height: 16),
+                  _buildNextPayoutCard(context, pool),
+                  const SizedBox(height: 16),
+                  _buildContributionsSection(context, provider, pool),
+                  const SizedBox(height: 16),
+                  _buildPayoutScheduleSection(context, provider, pool),
+                  const SizedBox(height: 80),
+                ],
+              ),
+              if (_isLocked)
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  child: _buildLockedBanner(context),
+                ),
             ],
           );
         },
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddContributionDialog(context),
-        child: const Icon(Icons.add),
+      floatingActionButton: _isLocked
+          ? null
+          : FloatingActionButton(
+              onPressed: () => _showAddContributionDialog(context),
+              child: const Icon(Icons.add),
+            ),
+    );
+  }
+
+  Widget _buildLockedBanner(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            Theme.of(context).colorScheme.surfaceContainerHighest,
+            Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.95),
+          ],
+        ),
+        border: Border(
+          top: BorderSide(
+            color: Theme.of(context).colorScheme.outlineVariant,
+          ),
+        ),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.lock_outline,
+              size: 14,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              'Screen is locked',
+              style: TextStyle(
+                fontSize: 12,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Text(
+              'Tap',
+              style: TextStyle(
+                fontSize: 12,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Icon(
+              Icons.lock_outline,
+              size: 12,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              'in toolbar to unlock',
+              style: TextStyle(
+                fontSize: 12,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -214,7 +319,9 @@ class MoneyPoolScreen extends StatelessWidget {
               padding: const EdgeInsets.all(24),
               child: Center(
                 child: Text(
-                  'No contributions yet.\nTap + to add one.',
+                  _isLocked
+                      ? 'No contributions yet.'
+                      : 'No contributions yet.\nTap + to add one.',
                   textAlign: TextAlign.center,
                   style: TextStyle(color: Colors.grey[500]),
                 ),
@@ -222,34 +329,40 @@ class MoneyPoolScreen extends StatelessWidget {
             ),
           )
         else
-          ...pool.contributions.map((c) => Dismissible(
-                key: ValueKey(c.id),
-                direction: DismissDirection.endToStart,
-                background: Container(
-                  alignment: Alignment.centerRight,
-                  padding: const EdgeInsets.only(right: 16),
-                  color: Colors.red,
-                  child: const Icon(Icons.delete, color: Colors.white),
+          ...pool.contributions.map((c) {
+            final child = Card(
+              margin: const EdgeInsets.only(bottom: 4),
+              child: ListTile(
+                leading: const CircleAvatar(
+                  backgroundColor: Colors.orange,
+                  child: Icon(Icons.savings, color: Colors.white, size: 20),
                 ),
-                onDismissed: (_) =>
-                    provider.removePoolContribution(c.id),
-                child: Card(
-                  margin: const EdgeInsets.only(bottom: 4),
-                  child: ListTile(
-                    leading: const CircleAvatar(
-                      backgroundColor: Colors.orange,
-                      child: Icon(Icons.savings, color: Colors.white, size: 20),
-                    ),
-                    title: Text(DateFormat.yMMMM().format(c.date)),
-                    trailing: CurrencyText(
-                      amount: c.amount,
-                      color: Colors.orange,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                      decimals: 0,
-                    ),
-                  ),
+                title: Text(DateFormat.yMMMM().format(c.date)),
+                trailing: CurrencyText(
+                  amount: c.amount,
+                  color: Colors.orange,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                  decimals: 0,
                 ),
-              )),
+              ),
+            );
+
+            if (_isLocked) return child;
+
+            return Dismissible(
+              key: ValueKey(c.id),
+              direction: DismissDirection.endToStart,
+              background: Container(
+                alignment: Alignment.centerRight,
+                padding: const EdgeInsets.only(right: 16),
+                color: Colors.red,
+                child: const Icon(Icons.delete, color: Colors.white),
+              ),
+              onDismissed: (_) =>
+                  provider.removePoolContribution(c.id),
+              child: child,
+            );
+          }),
       ],
     );
   }
@@ -311,9 +424,14 @@ class MoneyPoolScreen extends StatelessWidget {
                             : Icons.check,
                         size: 20,
                       ),
-                      color: payout.isReceived ? Colors.grey : Colors.green,
-                      onPressed: () =>
-                          provider.togglePayoutReceived(index),
+                      color: _isLocked
+                          ? Colors.grey.shade400
+                          : payout.isReceived
+                              ? Colors.grey
+                              : Colors.green,
+                      onPressed: _isLocked
+                          ? null
+                          : () => provider.togglePayoutReceived(index),
                     ),
                   ),
                 ],
