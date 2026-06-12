@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import '../utils/currency.dart';
 
 class MonthlySummaryTile extends StatelessWidget {
   final String monthLabel;
   final double income;
   final double expense;
   final double salary;
+  final double savings;
 
   const MonthlySummaryTile({
     super.key,
@@ -12,6 +14,7 @@ class MonthlySummaryTile extends StatelessWidget {
     required this.income,
     required this.expense,
     required this.salary,
+    required this.savings,
   });
 
   @override
@@ -36,6 +39,11 @@ class MonthlySummaryTile extends StatelessWidget {
                 padding: const EdgeInsets.only(bottom: 12),
                 child: _buildColumn('Salary', salary, Colors.indigo),
               ),
+            if (savings > 0)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: _buildColumn('Savings', savings, Colors.teal),
+              ),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -58,7 +66,7 @@ class MonthlySummaryTile extends StatelessWidget {
         Text(label, style: TextStyle(color: Colors.grey[600], fontSize: 12)),
         const SizedBox(height: 4),
         Text(
-          '${value.toStringAsFixed(2)} EGP',
+          '${formatEgp(value)}',
           style: TextStyle(
             color: color,
             fontWeight: FontWeight.w600,

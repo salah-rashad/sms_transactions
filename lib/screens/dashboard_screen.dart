@@ -129,6 +129,7 @@ class DashboardScreen extends StatelessWidget {
                     income: entry.value.income,
                     expense: entry.value.expense,
                     salary: entry.value.salary,
+                    savings: entry.value.savings,
                   );
                 }),
                 const SizedBox(height: 80),
