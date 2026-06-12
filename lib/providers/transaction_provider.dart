@@ -93,13 +93,6 @@ class TransactionProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  DateTime _effectiveMonthDate(Transaction t) {
-    if (t.date.day >= 24) {
-      return DateTime(t.date.year, t.date.month + 1, 1);
-    }
-    return t.date;
-  }
-
   Map<String, ({double income, double expense, double savings})> get monthlyBreakdown {
     final savingsMap = <String, double>{};
     for (final c in _moneyPool.contributions) {
