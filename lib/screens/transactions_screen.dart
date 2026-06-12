@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../models/transaction.dart';
 import '../providers/transaction_provider.dart';
+import '../services/export_service.dart';
 import '../widgets/transaction_card.dart';
 
 enum _Filter { all, income, expense }
@@ -16,11 +17,49 @@ class TransactionsScreen extends StatefulWidget {
 
 class _TransactionsScreenState extends State<TransactionsScreen> {
   _Filter _filter = _Filter.all;
+  bool _exporting = false;
+
+  Future<void> _export(List<Transaction> transactions) async {
+    if (_exporting) return;
+    setState(() => _exporting = true);
+    try {
+      await ExportService.exportTransactions(transactions);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Export failed: $e'), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _exporting = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Transactions')),
+      appBar: AppBar(
+        title: const Text('Transactions'),
+        actions: [
+          Consumer<TransactionProvider>(
+            builder: (context, provider, _) {
+              final exportable = provider.transactions
+                  .where((t) => t.type != TransactionType.balanceCheck)
+                  .toList();
+              return _exporting
+                  ? const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16),
+                      child: Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))),
+                    )
+                  : IconButton(
+                      icon: const Icon(Icons.file_download_outlined),
+                      tooltip: 'Export to Excel',
+                      onPressed: exportable.isEmpty ? null : () => _export(exportable),
+                    );
+            },
+          ),
+        ],
+      ),
       body: Consumer<TransactionProvider>(
         builder: (context, provider, _) {
           if (provider.isLoading) {

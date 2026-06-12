@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+
 import '../models/transaction.dart';
 import '../providers/transaction_provider.dart';
 import '../widgets/transaction_card.dart';
@@ -10,13 +11,13 @@ enum _Filter { all, income, expense }
 class SalaryCycleScreen extends StatefulWidget {
   final DateTime cycleStart;
   final DateTime? cycleEnd;
-  final String title;
+  final String? title;
 
   const SalaryCycleScreen({
     super.key,
     required this.cycleStart,
     this.cycleEnd,
-    required this.title,
+    this.title,
   });
 
   @override
@@ -26,10 +27,19 @@ class SalaryCycleScreen extends StatefulWidget {
 class _SalaryCycleScreenState extends State<SalaryCycleScreen> {
   _Filter _filter = _Filter.all;
 
+  String get _periodLabel {
+    final fmt = DateFormat('d MMM yyyy');
+    final start = fmt.format(widget.cycleStart);
+    final end = widget.cycleEnd != null
+        ? fmt.format(widget.cycleEnd!.subtract(const Duration(days: 1)))
+        : 'Present';
+    return '$start – $end';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.title)),
+      appBar: AppBar(title: Text(widget.title ?? _periodLabel)),
       body: Consumer<TransactionProvider>(
         builder: (context, provider, _) {
           final inCycle = provider.transactions.where((t) {
@@ -76,13 +86,18 @@ class _SalaryCycleScreenState extends State<SalaryCycleScreen> {
               ),
               Expanded(
                 child: filtered.isEmpty
-                    ? const Center(child: Text('No transactions in this period'))
+                    ? const Center(
+                        child: Text('No transactions in this period'),
+                      )
                     : ListView.builder(
                         itemCount: filtered.length,
                         itemBuilder: (context, index) {
                           final txn = filtered[index];
-                          final prevTxn = index > 0 ? filtered[index - 1] : null;
-                          final newDay = prevTxn == null ||
+                          final prevTxn = index > 0
+                              ? filtered[index - 1]
+                              : null;
+                          final newDay =
+                              prevTxn == null ||
                               !_sameDay(txn.date, prevTxn.date);
 
                           return Column(
@@ -90,8 +105,12 @@ class _SalaryCycleScreenState extends State<SalaryCycleScreen> {
                             children: [
                               if (newDay)
                                 Padding(
-                                  padding:
-                                      const EdgeInsets.fromLTRB(16, 10, 16, 2),
+                                  padding: const EdgeInsets.fromLTRB(
+                                    16,
+                                    10,
+                                    16,
+                                    2,
+                                  ),
                                   child: Text(
                                     _formatDateHeader(txn.date),
                                     style: TextStyle(

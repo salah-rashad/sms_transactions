@@ -193,7 +193,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           builder: (_) => SalaryCycleScreen(
                             cycleStart: v.cycleStart,
                             cycleEnd: v.cycleEnd,
-                            title: DateFormat.yMMMM().format(v.cycleStart),
+                            // title: DateFormat.yMMMM().format(v.cycleStart),
                           ),
                         ),
                       ),
