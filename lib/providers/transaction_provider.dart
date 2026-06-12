@@ -1,21 +1,30 @@
 import 'package:flutter/material.dart';
-import '../models/transaction.dart';
+
+import '../database/app_database.dart';
 import '../models/account.dart';
 import '../models/money_pool.dart';
-import '../services/sms_service.dart';
+import '../models/transaction.dart';
 import '../services/sms_parser.dart';
+import '../services/sms_service.dart';
 
 class TransactionProvider extends ChangeNotifier {
   final SmsService _smsService = SmsService();
+  final AppDatabase _db;
+
+  TransactionProvider(this._db);
 
   List<Transaction> _transactions = [];
   bool _isLoading = false;
   String? _error;
   final MoneyPool _moneyPool = MoneyPool();
+  final Set<String> _salaryMarkedIds = {};
 
   List<Transaction> get transactions => _transactions;
+
   bool get isLoading => _isLoading;
+
   String? get error => _error;
+
   MoneyPool get moneyPool => _moneyPool;
 
   double get totalIncome => _transactions
@@ -80,20 +89,30 @@ class TransactionProvider extends ChangeNotifier {
   }
 
   bool _isSalary(Transaction t) {
-    if (t.isMarkedAsSalary) return true;
-    return t.type == TransactionType.income &&
-        t.source == AccountSource.bankAlAhly &&
-        t.amount >= 30000;
+    return t.isMarkedAsSalary;
+
+    // if (t.isMarkedAsSalary) return true;
+    // return t.type == TransactionType.income &&
+    //     t.source == AccountSource.bankAlAhly &&
+    //     t.amount >= 30000;
   }
 
   void toggleSalaryMark(String transactionId) {
     final t = _transactions.where((t) => t.id == transactionId).firstOrNull;
     if (t == null || t.type != TransactionType.income) return;
     t.isMarkedAsSalary = !t.isMarkedAsSalary;
+    if (t.isMarkedAsSalary) {
+      _salaryMarkedIds.add(transactionId);
+      _db.insertSalaryMark(transactionId);
+    } else {
+      _salaryMarkedIds.remove(transactionId);
+      _db.deleteSalaryMark(transactionId);
+    }
     notifyListeners();
   }
 
-  Map<String, ({double income, double expense, double savings})> get monthlyBreakdown {
+  Map<String, ({double income, double expense, double savings})>
+  get monthlyBreakdown {
     final savingsMap = <String, double>{};
     for (final c in _moneyPool.contributions) {
       final key = '${c.date.year}-${c.date.month.toString().padLeft(2, '0')}';
@@ -122,7 +141,8 @@ class TransactionProvider extends ChangeNotifier {
     }
 
     for (final entry in savingsMap.entries) {
-      final existing = map[entry.key] ?? (income: 0.0, expense: 0.0, savings: 0.0);
+      final existing =
+          map[entry.key] ?? (income: 0.0, expense: 0.0, savings: 0.0);
       map[entry.key] = (
         income: existing.income,
         expense: existing.expense - entry.value,
@@ -134,20 +154,44 @@ class TransactionProvider extends ChangeNotifier {
     return {for (final k in sortedKeys) k: map[k]!};
   }
 
-  Map<String, ({double salary, double otherIncome, double expense, double savings, double remaining, DateTime cycleStart, DateTime? cycleEnd})> get salaryBasedBreakdown {
-    final salaryTxns = _transactions
-        .where((t) => _isSalary(t))
-        .toList()
-        ..sort((a, b) => a.date.compareTo(b.date));
+  Map<
+    String,
+    ({
+      double salary,
+      double otherIncome,
+      double expense,
+      double savings,
+      double remaining,
+      DateTime cycleStart,
+      DateTime? cycleEnd,
+    })
+  >
+  get salaryBasedBreakdown {
+    final salaryTxns = _transactions.where((t) => _isSalary(t)).toList()
+      ..sort((a, b) => a.date.compareTo(b.date));
 
     if (salaryTxns.isEmpty) return {};
 
-    final map = <String, ({double salary, double otherIncome, double expense, double savings, double remaining, DateTime cycleStart, DateTime? cycleEnd})>{};
+    final map =
+        <
+          String,
+          ({
+            double salary,
+            double otherIncome,
+            double expense,
+            double savings,
+            double remaining,
+            DateTime cycleStart,
+            DateTime? cycleEnd,
+          })
+        >{};
 
     for (int i = 0; i < salaryTxns.length; i++) {
       final salaryTxn = salaryTxns[i];
       final cycleStart = salaryTxn.date;
-      final cycleEnd = i + 1 < salaryTxns.length ? salaryTxns[i + 1].date : null;
+      final cycleEnd = i + 1 < salaryTxns.length
+          ? salaryTxns[i + 1].date
+          : null;
 
       final key =
           '${cycleStart.year}-${cycleStart.month.toString().padLeft(2, '0')}-${cycleStart.day.toString().padLeft(2, '0')}';
@@ -193,17 +237,22 @@ class TransactionProvider extends ChangeNotifier {
 
   void addPoolContribution(double amount, DateTime date) {
     final id = 'pool-${date.millisecondsSinceEpoch}';
-    _moneyPool.contributions.add(PoolContribution(
-      id: id,
-      date: date,
-      amount: amount,
-    ));
+    final contribution = PoolContribution(id: id, date: date, amount: amount);
+    _moneyPool.contributions.add(contribution);
     _moneyPool.contributions.sort((a, b) => b.date.compareTo(a.date));
+    _db.insertContribution(
+      PoolContributionsCompanion.insert(
+        id: id,
+        date: date.millisecondsSinceEpoch,
+        amount: amount,
+      ),
+    );
     notifyListeners();
   }
 
   void removePoolContribution(String id) {
     _moneyPool.contributions.removeWhere((c) => c.id == id);
+    _db.deleteContribution(id);
     notifyListeners();
   }
 
@@ -211,6 +260,10 @@ class TransactionProvider extends ChangeNotifier {
     if (payoutIndex >= 0 && payoutIndex < _moneyPool.payouts.length) {
       _moneyPool.payouts[payoutIndex].isReceived =
           !_moneyPool.payouts[payoutIndex].isReceived;
+      _db.setPayoutReceived(
+        payoutIndex,
+        _moneyPool.payouts[payoutIndex].isReceived,
+      );
       notifyListeners();
     }
   }
@@ -221,6 +274,35 @@ class TransactionProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
+      // Load persisted data from DB
+      final contributionRows = await _db.getAllContributions();
+      _moneyPool.contributions
+        ..clear()
+        ..addAll(
+          contributionRows.map(
+            (row) => PoolContribution(
+              id: row.id,
+              date: DateTime.fromMillisecondsSinceEpoch(row.date),
+              amount: row.amount,
+            ),
+          ),
+        )
+        ..sort((a, b) => b.date.compareTo(a.date));
+
+      final payoutStateRows = await _db.getPayoutStates();
+      for (final row in payoutStateRows) {
+        if (row.payoutIndex >= 0 &&
+            row.payoutIndex < _moneyPool.payouts.length) {
+          _moneyPool.payouts[row.payoutIndex].isReceived = row.isReceived;
+        }
+      }
+
+      final salaryMarkRows = await _db.getSalaryMarks();
+      _salaryMarkedIds
+        ..clear()
+        ..addAll(salaryMarkRows.map((r) => r.transactionId));
+
+      // Load SMS transactions
       final granted = await _smsService.requestPermission();
       if (!granted) {
         _error = 'SMS permission denied';
@@ -235,6 +317,13 @@ class TransactionProvider extends ChangeNotifier {
           .map((sms) => SmsParser.parse(sms))
           .whereType<Transaction>()
           .toList();
+
+      // Re-apply persisted salary marks
+      for (final t in _transactions) {
+        if (_salaryMarkedIds.contains(t.id)) {
+          t.isMarkedAsSalary = true;
+        }
+      }
 
       _isLoading = false;
       notifyListeners();
