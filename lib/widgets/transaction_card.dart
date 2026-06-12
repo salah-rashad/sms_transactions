@@ -3,8 +3,13 @@ import '../models/transaction.dart';
 
 class TransactionCard extends StatelessWidget {
   final Transaction transaction;
+  final VoidCallback? onToggleSalary;
 
-  const TransactionCard({super.key, required this.transaction});
+  const TransactionCard({
+    super.key,
+    required this.transaction,
+    this.onToggleSalary,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -26,44 +31,81 @@ class TransactionCard extends StatelessWidget {
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: iconColor.withValues(alpha: 0.1),
-          child: Icon(iconData, color: iconColor),
-        ),
-        title: Text(
-          transaction.counterparty ?? _typeLabel(transaction.type),
-          style: const TextStyle(fontWeight: FontWeight.w500),
-        ),
-        subtitle: Text(
-          _formatDate(transaction.date),
-          style: TextStyle(color: Colors.grey[600], fontSize: 12),
-        ),
-        trailing: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(
-              '${isIncome ? '+' : '-'}${transaction.amount.toStringAsFixed(2)} EGP',
-              style: TextStyle(
-                color: iconColor,
-                fontWeight: FontWeight.bold,
+      child: InkWell(
+        onLongPress: isIncome ? onToggleSalary : null,
+        borderRadius: BorderRadius.circular(12),
+        child: ListTile(
+          leading: CircleAvatar(
+            backgroundColor: iconColor.withValues(alpha: 0.1),
+            child: Icon(iconData, color: iconColor),
+          ),
+          title: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  transaction.counterparty ?? _typeLabel(transaction.type),
+                  style: const TextStyle(fontWeight: FontWeight.w500),
+                ),
               ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: Colors.grey[200],
-                borderRadius: BorderRadius.circular(4),
+              if (transaction.isMarkedAsSalary)
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.indigo.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.work_outline, size: 12, color: Colors.indigo),
+                      SizedBox(width: 3),
+                      Text(
+                        'Salary',
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: Colors.indigo,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+          subtitle: Text(
+            isIncome
+                ? '${_formatDate(transaction.date)}  ·  Long press to mark as salary'
+                : _formatDate(transaction.date),
+            style: TextStyle(color: Colors.grey[600], fontSize: 12),
+          ),
+          trailing: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                '${isIncome ? '+' : '-'}${transaction.amount.toStringAsFixed(2)} EGP',
+                style: TextStyle(
+                  color: iconColor,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-              child: Text(
-                transaction.source == AccountSource.bankAlAhly
-                    ? 'BanK-AlAhly'
-                    : 'VF-Cash',
-                style: const TextStyle(fontSize: 10),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.grey[200],
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  transaction.source == AccountSource.bankAlAhly
+                      ? 'BanK-AlAhly'
+                      : 'VF-Cash',
+                  style: const TextStyle(fontSize: 10),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

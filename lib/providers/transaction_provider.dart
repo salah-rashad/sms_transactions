@@ -40,10 +40,17 @@ class TransactionProvider extends ChangeNotifier {
         .where((t) => t.type == TransactionType.expense)
         .fold(0.0, (sum, t) => sum + t.amount);
 
-    double? vfBalance;
+    double? bankAnnounced;
+    for (final t in bankTxns) {
+      if (t.balance != null) {
+        bankAnnounced ??= t.balance;
+      }
+    }
+
+    double? vfAnnounced;
     for (final t in vfTxns) {
       if (t.balance != null) {
-        vfBalance ??= t.balance;
+        vfAnnounced ??= t.balance;
       }
     }
 
@@ -51,27 +58,36 @@ class TransactionProvider extends ChangeNotifier {
       Account(
         source: AccountSource.bankAlAhly,
         displayName: 'BanK-AlAhly',
-        currentBalance: bankIncome - bankExpense,
+        estimatedBalance: bankIncome - bankExpense,
+        announcedBalance: bankAnnounced,
         transactionCount: bankTxns.length,
-        isEstimated: true,
       ),
       Account(
         source: AccountSource.vfCash,
         displayName: 'VF-Cash',
-        currentBalance: vfBalance ?? 0.0,
+        estimatedBalance: (vfAnnounced ?? 0.0),
+        announcedBalance: vfAnnounced,
         transactionCount: vfTxns.length,
       ),
     ];
   }
 
   bool _isSalary(Transaction t) {
+    if (t.isMarkedAsSalary) return true;
     return t.type == TransactionType.income &&
         t.source == AccountSource.bankAlAhly &&
         t.amount >= 30000;
   }
 
+  void toggleSalaryMark(String transactionId) {
+    final t = _transactions.where((t) => t.id == transactionId).firstOrNull;
+    if (t == null || t.type != TransactionType.income) return;
+    t.isMarkedAsSalary = !t.isMarkedAsSalary;
+    notifyListeners();
+  }
+
   DateTime _effectiveMonthDate(Transaction t) {
-    if (_isSalary(t) && t.date.day >= 24) {
+    if (t.date.day >= 24) {
       return DateTime(t.date.year, t.date.month + 1, 1);
     }
     return t.date;

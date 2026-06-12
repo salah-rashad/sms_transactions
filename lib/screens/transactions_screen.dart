@@ -1,11 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../models/transaction.dart';
 import '../providers/transaction_provider.dart';
 import '../widgets/transaction_card.dart';
 
-class TransactionsScreen extends StatelessWidget {
+enum _Filter { all, income, expense }
+
+class TransactionsScreen extends StatefulWidget {
   const TransactionsScreen({super.key});
+
+  @override
+  State<TransactionsScreen> createState() => _TransactionsScreenState();
+}
+
+class _TransactionsScreenState extends State<TransactionsScreen> {
+  _Filter _filter = _Filter.all;
 
   @override
   Widget build(BuildContext context) {
@@ -25,39 +35,96 @@ class TransactionsScreen extends StatelessWidget {
             return const Center(child: Text('No transactions found'));
           }
 
-          final filtered = provider.transactions
-              .where((t) => t.type != TransactionType.balanceCheck)
-              .toList();
+          final filtered = provider.transactions.where((t) {
+            if (t.type == TransactionType.balanceCheck) return false;
+            switch (_filter) {
+              case _Filter.all:
+                return true;
+              case _Filter.income:
+                return t.type == TransactionType.income;
+              case _Filter.expense:
+                return t.type == TransactionType.expense;
+            }
+          }).toList();
 
-          return RefreshIndicator(
-            onRefresh: provider.loadTransactions,
-            child: ListView.builder(
-              itemCount: filtered.length,
-              itemBuilder: (context, index) {
-                final txn = filtered[index];
+          return Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+                child: SegmentedButton<_Filter>(
+                  segments: const [
+                    ButtonSegment(value: _Filter.all, label: Text('All')),
+                    ButtonSegment(
+                      value: _Filter.income,
+                      icon: Icon(Icons.arrow_downward, size: 16),
+                      label: Text('Income'),
+                    ),
+                    ButtonSegment(
+                      value: _Filter.expense,
+                      icon: Icon(Icons.arrow_upward, size: 16),
+                      label: Text('Expense'),
+                    ),
+                  ],
+                  selected: {_filter},
+                  onSelectionChanged: (v) => setState(() => _filter = v.first),
+                ),
+              ),
+              Expanded(
+                child: filtered.isEmpty
+                    ? const Center(child: Text('No matching transactions'))
+                    : RefreshIndicator(
+                        onRefresh: provider.loadTransactions,
+                        child: ListView.builder(
+                          itemCount: filtered.length,
+                          itemBuilder: (context, index) {
+                            final txn = filtered[index];
+                            final prevTxn = index > 0 ? filtered[index - 1] : null;
+                            final newMonth = prevTxn == null ||
+                                !_sameMonth(txn.date, prevTxn.date);
+                            final newDay = prevTxn == null ||
+                                !_sameDay(txn.date, prevTxn.date);
 
-                if (index == 0 || !_sameDay(txn.date, filtered[index - 1].date)) {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-                        child: Text(
-                          _formatDateHeader(txn.date),
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.grey[700],
-                          ),
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (newMonth)
+                                  Padding(
+                                    padding: const EdgeInsets.fromLTRB(
+                                        16, 16, 16, 0),
+                                    child: Text(
+                                      DateFormat.yMMMM().format(txn.date),
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        color: Theme.of(context).primaryColor,
+                                      ),
+                                    ),
+                                  ),
+                                if (newDay)
+                                  Padding(
+                                    padding: const EdgeInsets.fromLTRB(
+                                        16, 10, 16, 2),
+                                    child: Text(
+                                      _formatDateHeader(txn.date),
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.grey[600],
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ),
+                                TransactionCard(
+                                  transaction: txn,
+                                  onToggleSalary: () =>
+                                      provider.toggleSalaryMark(txn.id),
+                                ),
+                              ],
+                            );
+                          },
                         ),
                       ),
-                      TransactionCard(transaction: txn),
-                    ],
-                  );
-                }
-
-                return TransactionCard(transaction: txn);
-              },
-            ),
+              ),
+            ],
           );
         },
       ),
@@ -66,6 +133,10 @@ class TransactionsScreen extends StatelessWidget {
 
   bool _sameDay(DateTime a, DateTime b) {
     return a.year == b.year && a.month == b.month && a.day == b.day;
+  }
+
+  bool _sameMonth(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month;
   }
 
   String _formatDateHeader(DateTime date) {

@@ -3,15 +3,15 @@ import 'transaction.dart';
 class Account {
   final AccountSource source;
   final String displayName;
-  final double currentBalance;
+  final double estimatedBalance;
+  final double? announcedBalance;
   final int transactionCount;
-  final bool isEstimated;
 
   const Account({
     required this.source,
     required this.displayName,
-    required this.currentBalance,
+    required this.estimatedBalance,
+    this.announcedBalance,
     required this.transactionCount,
-    this.isEstimated = false,
   });
 }

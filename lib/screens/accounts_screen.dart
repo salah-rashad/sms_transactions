@@ -60,15 +60,16 @@ class AccountsScreen extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Balance',
+                                  'Estimated Balance',
                                   style: TextStyle(color: Colors.grey[600]),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  '${account.currentBalance.toStringAsFixed(2)} EGP',
-                                  style: const TextStyle(
+                                  '${account.estimatedBalance.toStringAsFixed(2)} EGP',
+                                  style: TextStyle(
                                     fontSize: 22,
                                     fontWeight: FontWeight.bold,
+                                    color: Theme.of(context).primaryColor,
                                   ),
                                 ),
                               ],
@@ -92,25 +93,28 @@ class AccountsScreen extends StatelessWidget {
                             ),
                           ],
                         ),
-                        if (account.isEstimated) ...[
+                        if (account.announcedBalance != null) ...[
                           const SizedBox(height: 12),
                           Container(
-                            padding: const EdgeInsets.all(8),
+                            padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: Colors.orange.shade50,
+                              color: Colors.grey.shade100,
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Row(
                               children: [
-                                Icon(Icons.info_outline,
-                                    size: 16, color: Colors.orange[700]),
+                                Icon(
+                                  Icons.info_outline,
+                                  size: 18,
+                                  color: Colors.grey[600],
+                                ),
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
-                                    'Estimated balance (income - expense)',
+                                    'Last announced: ${account.announcedBalance!.toStringAsFixed(2)} EGP',
                                     style: TextStyle(
                                       fontSize: 12,
-                                      color: Colors.orange[700],
+                                      color: Colors.grey[600],
                                     ),
                                   ),
                                 ),

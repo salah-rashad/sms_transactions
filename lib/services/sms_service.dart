@@ -10,19 +10,29 @@ class SmsService {
   }
 
   Future<List<SmsMessage>> getFinancialSms() async {
-    final messages = await _smsQuery.querySms(
+    final alAhlyMessages = await _smsQuery.querySms(
       kinds: [SmsQueryKind.inbox],
-      count: 500,
+      address: "BanK-AlAhly",
+      count: 5000,
     );
 
-    return messages.where((msg) {
-      final address = (msg.address ?? '').toLowerCase();
-      return address.contains('ahly') ||
-          address.contains('vf-cash') ||
-          address.contains('vf cash') ||
-          address.contains('vodafone') ||
-          address.contains('فودافون');
-    }).toList()
-      ..sort((a, b) => (b.date ?? DateTime(1970)).compareTo(a.date ?? DateTime(1970)));
+    final vfCashMessages = await _smsQuery.querySms(
+      kinds: [SmsQueryKind.inbox],
+      address: "VF-Cash",
+      count: 5000,
+    );
+
+    // return messages.where((msg) {
+    //   final address = (msg.address ?? '').toLowerCase();
+    //   return address.contains('ahly') ||
+    //       address.contains('vf-cash') ||
+    //       address.contains('vf cash') ||
+    //       address.contains('vodafone') ||
+    //       address.contains('فودافون');
+    // });
+
+    return [...alAhlyMessages, ...vfCashMessages]..sort(
+      (a, b) => (b.date ?? DateTime(1970)).compareTo(a.date ?? DateTime(1970)),
+    );
   }
 }

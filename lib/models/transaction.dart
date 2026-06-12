@@ -11,8 +11,9 @@ class Transaction {
   final String? counterparty;
   final DateTime date;
   final String rawSms;
+  bool isMarkedAsSalary;
 
-  const Transaction({
+  Transaction({
     required this.id,
     required this.source,
     required this.type,
@@ -21,5 +22,6 @@ class Transaction {
     this.counterparty,
     required this.date,
     required this.rawSms,
+    this.isMarkedAsSalary = false,
   });
 }
