@@ -19,6 +19,7 @@ dependencies:
   path: ^1.9.0
   excel: ^4.0.6
   share_plus: ^10.0.0
+  shadcn_flutter: ^0.0.52
 
 dev_dependencies:
   flutter_test:

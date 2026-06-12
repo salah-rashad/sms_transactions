@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:shadcn_flutter/shadcn_flutter.dart';
 import 'package:provider/provider.dart';
 import '../providers/transaction_provider.dart';
 import '../widgets/currency_text.dart';
@@ -9,8 +9,13 @@ class AccountsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Accounts')),
-      body: Consumer<TransactionProvider>(
+      headers: [
+        const AppBar(
+          title: Text('Accounts'),
+        ),
+        const Divider(),
+      ],
+      child: Consumer<TransactionProvider>(
         builder: (context, provider, _) {
           if (provider.isLoading) {
             return const Center(child: CircularProgressIndicator());
@@ -18,16 +23,15 @@ class AccountsScreen extends StatelessWidget {
 
           final accounts = provider.accounts;
 
-          return RefreshIndicator(
-            onRefresh: provider.loadTransactions,
-            child: ListView.builder(
+          return RefreshTrigger(
+            onRefresh: () async {
+              await provider.loadTransactions();
+            },
+            child: SingleChildScrollView(
               padding: const EdgeInsets.all(12),
-              itemCount: accounts.length,
-              itemBuilder: (context, index) {
-                final account = accounts[index];
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  child: Padding(
+              child: Column(
+                children: accounts.map((account) {
+                  return Card(
                     padding: const EdgeInsets.all(20),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -38,39 +42,31 @@ class AccountsScreen extends StatelessWidget {
                               account.source.name == 'bankAlAhly'
                                   ? Icons.account_balance
                                   : Icons.phone_android,
-                              size: 32,
-                              color: Theme.of(context).primaryColor,
+                              size: 28,
+                              color: Theme.of(context).colorScheme.primary,
                             ),
-                            const SizedBox(width: 12),
+                            const Gap(12),
                             Expanded(
-                              child: Text(
-                                account.displayName,
-                                style: const TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
+                              child: Text(account.displayName).semiBold.large,
                             ),
                           ],
                         ),
-                        const Divider(height: 32),
+                        const Divider(),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  'Estimated Balance',
-                                  style: TextStyle(color: Colors.grey[600]),
-                                ),
-                                const SizedBox(height: 4),
+                                const Text('Estimated Balance').muted.xSmall,
+                                const Gap(4),
                                 CurrencyText(
                                   amount: account.estimatedBalance,
-                                  color: Theme.of(context).primaryColor,
-                                  style: const TextStyle(
+                                  color: Theme.of(context).colorScheme.primary,
+                                  style: TextStyle(
                                     fontSize: 22,
                                     fontWeight: FontWeight.bold,
+                                    color: Theme.of(context).colorScheme.primary,
                                   ),
                                 ),
                               ],
@@ -78,38 +74,24 @@ class AccountsScreen extends StatelessWidget {
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
-                                Text(
-                                  'Transactions',
-                                  style: TextStyle(color: Colors.grey[600]),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  '${account.transactionCount}',
-                                  style: const TextStyle(
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
+                                const Text('Transactions').muted.xSmall,
+                                const Gap(4),
+                                Text('${account.transactionCount}').bold.x2Large,
                               ],
                             ),
                           ],
                         ),
                         if (account.announcedBalance != null) ...[
-                          const SizedBox(height: 12),
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: Colors.grey.shade100,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
+                          const Gap(12),
+                          SurfaceCard(
                             child: Row(
                               children: [
                                 Icon(
                                   Icons.info_outline,
-                                  size: 18,
-                                  color: Colors.grey[600],
+                                  size: 16,
+                                  color: Theme.of(context).colorScheme.mutedForeground,
                                 ),
-                                const SizedBox(width: 8),
+                                const Gap(8),
                                 Expanded(
                                   child: _AnnouncedBalanceText(
                                     announcedBalance: account.announcedBalance!,
@@ -121,9 +103,9 @@ class AccountsScreen extends StatelessWidget {
                         ],
                       ],
                     ),
-                  ),
-                );
-              },
+                  ).withPadding(bottom: 12);
+                }).toList(),
+              ),
             ),
           );
         },
@@ -140,8 +122,8 @@ class _AnnouncedBalanceText extends StatelessWidget {
   Widget build(BuildContext context) {
     return CurrencyText(
       amount: announcedBalance,
-      color: Colors.grey,
-      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal),
+      color: Theme.of(context).colorScheme.mutedForeground,
+      style: TextStyle(fontSize: 12, fontWeight: FontWeight.normal, color: Theme.of(context).colorScheme.mutedForeground),
       prefix: 'Last announced: ',
     );
   }

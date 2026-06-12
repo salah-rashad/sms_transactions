@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:shadcn_flutter/shadcn_flutter.dart';
 import '../models/transaction.dart';
 import '../widgets/currency_text.dart';
 
@@ -31,89 +31,77 @@ class TransactionCard extends StatelessWidget {
     }
 
     return Card(
-      color: transaction.isMarkedAsSalary ? Colors.indigo.shade100 : null,
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      child: InkWell(
+      padding: EdgeInsets.zero,
+      borderColor: transaction.isMarkedAsSalary
+          ? Colors.indigo.withValues(alpha: 0.3)
+          : null,
+      child: GestureDetector(
         onLongPress: isIncome ? onToggleSalary : null,
-        borderRadius: BorderRadius.circular(12),
-        child: ListTile(
-          leading: CircleAvatar(
-            backgroundColor: iconColor.withValues(alpha: 0.1),
-            child: Icon(iconData, color: iconColor),
-          ),
-          title: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  transaction.counterparty ?? _typeLabel(transaction.type),
-                  style: const TextStyle(fontWeight: FontWeight.w500),
-                ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          child: Basic(
+            leading: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: iconColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(20),
               ),
-              if (transaction.isMarkedAsSalary)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 6,
-                    vertical: 2,
+              child: Icon(iconData, color: iconColor, size: 20),
+            ),
+            leadingAlignment: Alignment.center,
+            title: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    transaction.counterparty ?? _typeLabel(transaction.type),
+                  ).semiBold,
+                ),
+                if (transaction.isMarkedAsSalary)
+                  SecondaryBadge(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.work_outline, size: 10, color: Colors.indigo),
+                        const Gap(3),
+                        const Text('Salary'),
+                      ],
+                    ),
                   ),
-                  decoration: BoxDecoration(
-                    color: Colors.indigo.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(4),
+              ],
+            ),
+            subtitle: Text(_formatDate(transaction.date)).muted.xSmall,
+            trailing: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                CurrencyText(
+                  amount: transaction.amount,
+                  color: iconColor,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    color: iconColor,
                   ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.work_outline, size: 12, color: Colors.indigo),
-                      SizedBox(width: 3),
-                      Text(
-                        'Salary',
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: Colors.indigo,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
+                  prefix: isIncome ? '+' : '-',
+                  decimals: 2,
+                  includeCurrency: false,
+                ),
+                const Gap(4),
+                SecondaryBadge(
+                  child: Text(
+                    transaction.source == AccountSource.bankAlAhly
+                        ? 'Bank-AlAhly'
+                        : 'VF-Cash',
                   ),
                 ),
-            ],
-          ),
-          subtitle: Text(
-            _formatDate(transaction.date),
-            style: TextStyle(color: Colors.grey[600], fontSize: 12),
-          ),
-          trailing: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              CurrencyText(
-                amount: transaction.amount,
-                color: iconColor,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                ),
-                prefix: isIncome ? '+' : '-',
-                decimals: 2,
-                includeCurrency: false,
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: Colors.grey[200],
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  transaction.source == AccountSource.bankAlAhly
-                      ? 'BanK-AlAhly'
-                      : 'VF-Cash',
-                  style: const TextStyle(fontSize: 10),
-                ),
-              ),
-            ],
+              ],
+            ),
+            trailingAlignment: Alignment.center,
           ),
         ),
       ),
-    );
+    ).withPadding(horizontal: 12, vertical: 3);
   }
 
   String _typeLabel(TransactionType type) {

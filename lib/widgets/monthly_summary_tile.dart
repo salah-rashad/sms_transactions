@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:shadcn_flutter/shadcn_flutter.dart';
 import 'currency_text.dart';
 
 class MonthlySummaryTile extends StatelessWidget {
@@ -20,10 +20,10 @@ class MonthlySummaryTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
+      padding: EdgeInsets.zero,
+      child: GestureDetector(
         onTap: onTap,
+        behavior: HitTestBehavior.opaque,
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -31,17 +31,9 @@ class MonthlySummaryTile extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Expanded(
-                    child: Text(
-                      monthLabel,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ),
+                  Expanded(child: Text(monthLabel).semiBold.large),
                   if (onTap != null)
-                    Icon(Icons.chevron_right, color: Colors.grey[400]),
+                    Icon(Icons.chevron_right, size: 20, color: Theme.of(context).colorScheme.mutedForeground),
                 ],
               ),
               const Divider(),
@@ -69,19 +61,19 @@ class MonthlySummaryTile extends StatelessWidget {
           ),
         ),
       ),
-    );
+    ).withPadding(horizontal: 12, vertical: 4);
   }
 
   Widget _buildColumn(String label, double value, Color color) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: TextStyle(color: Colors.grey[600], fontSize: 12)),
-        const SizedBox(height: 4),
+        Text(label).muted.xSmall,
+        const Gap(4),
         CurrencyText(
           amount: value,
           color: color,
-          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: color),
           includeCurrency: false,
         ),
       ],

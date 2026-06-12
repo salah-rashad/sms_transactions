@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:shadcn_flutter/shadcn_flutter.dart';
 import 'package:provider/provider.dart';
 import 'database/app_database.dart';
 import 'providers/transaction_provider.dart';
@@ -19,13 +19,18 @@ class MainApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (_) => TransactionProvider(db)..loadTransactions(),
-      child: MaterialApp(
+      child: const ShadcnApp(
         title: 'SMS Transactions',
         theme: ThemeData(
-          colorSchemeSeed: Colors.indigo,
-          useMaterial3: true,
+          colorScheme: ColorSchemes.lightSlate,
+          radius: 0.5,
         ),
-        home: const MainScreen(),
+        darkTheme: ThemeData.dark(
+          colorScheme: ColorSchemes.darkSlate,
+          radius: 0.5,
+        ),
+        themeMode: ThemeMode.system,
+        home: MainScreen(),
       ),
     );
   }

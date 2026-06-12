@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:shadcn_flutter/shadcn_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../models/transaction.dart';
@@ -26,8 +26,23 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       await ExportService.exportTransactions(transactions);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Export failed: $e'), backgroundColor: Colors.red),
+        showToast(
+          context: context,
+          builder: (context, overlay) {
+            return SurfaceCard(
+              child: Basic(
+                title: const Text('Export failed'),
+                subtitle: Text('$e'),
+                trailing: OutlineButton(
+                  size: ButtonSize.small,
+                  onPressed: () => overlay.close(),
+                  child: const Text('Dismiss'),
+                ),
+                trailingAlignment: Alignment.center,
+              ),
+            );
+          },
+          location: ToastLocation.bottomCenter,
         );
       }
     } finally {
@@ -38,40 +53,43 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Transactions'),
-        actions: [
-          Consumer<TransactionProvider>(
-            builder: (context, provider, _) {
-              final exportable = provider.transactions
-                  .where((t) => t.type != TransactionType.balanceCheck)
-                  .toList();
-              return _exporting
-                  ? const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16),
-                      child: Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))),
-                    )
-                  : IconButton(
-                      icon: const Icon(Icons.file_download_outlined),
-                      tooltip: 'Export to Excel',
-                      onPressed: exportable.isEmpty ? null : () => _export(exportable),
-                    );
-            },
-          ),
-        ],
-      ),
-      body: Consumer<TransactionProvider>(
+      headers: [
+        AppBar(
+          title: const Text('Transactions'),
+          trailing: [
+            Consumer<TransactionProvider>(
+              builder: (context, provider, _) {
+                final exportable = provider.transactions
+                    .where((t) => t.type != TransactionType.balanceCheck)
+                    .toList();
+                return _exporting
+                    ? const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 16),
+                        child: Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator())),
+                      )
+                    : IconButton.ghost(
+                        onPressed: exportable.isEmpty ? null : () => _export(exportable),
+                        icon: const Icon(Icons.file_download_outlined),
+                        density: ButtonDensity.icon,
+                      );
+              },
+            ),
+          ],
+        ),
+        const Divider(),
+      ],
+      child: Consumer<TransactionProvider>(
         builder: (context, provider, _) {
           if (provider.isLoading) {
             return const Center(child: CircularProgressIndicator());
           }
 
           if (provider.error != null) {
-            return Center(child: Text(provider.error!));
+            return Center(child: Text(provider.error!).muted);
           }
 
           if (provider.transactions.isEmpty) {
-            return const Center(child: Text('No transactions found'));
+            return Center(child: const Text('No transactions found').muted);
           }
 
           final filtered = provider.transactions.where((t) {
@@ -90,29 +108,23 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
             children: [
               Padding(
                 padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
-                child: SegmentedButton<_Filter>(
-                  segments: const [
-                    ButtonSegment(value: _Filter.all, label: Text('All')),
-                    ButtonSegment(
-                      value: _Filter.income,
-                      icon: Icon(Icons.arrow_downward, size: 16),
-                      label: Text('Income'),
-                    ),
-                    ButtonSegment(
-                      value: _Filter.expense,
-                      icon: Icon(Icons.arrow_upward, size: 16),
-                      label: Text('Expense'),
-                    ),
+                child: Tabs(
+                  index: _filter.index,
+                  onChanged: (i) => setState(() => _filter = _Filter.values[i]),
+                  children: const [
+                    TabItem(child: Text('All')),
+                    TabItem(child: Text('Income')),
+                    TabItem(child: Text('Expense')),
                   ],
-                  selected: {_filter},
-                  onSelectionChanged: (v) => setState(() => _filter = v.first),
                 ),
               ),
               Expanded(
                 child: filtered.isEmpty
-                    ? const Center(child: Text('No matching transactions'))
-                    : RefreshIndicator(
-                        onRefresh: provider.loadTransactions,
+                    ? Center(child: const Text('No matching transactions').muted)
+                    : RefreshTrigger(
+                        onRefresh: () async {
+                          await provider.loadTransactions();
+                        },
                         child: ListView.builder(
                           itemCount: filtered.length,
                           itemBuilder: (context, index) {
@@ -128,29 +140,15 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                               children: [
                                 if (newMonth)
                                   Padding(
-                                    padding: const EdgeInsets.fromLTRB(
-                                        16, 16, 16, 0),
+                                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
                                     child: Text(
                                       DateFormat.yMMMM().format(txn.date),
-                                      style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                        color: Theme.of(context).primaryColor,
-                                      ),
-                                    ),
+                                    ).semiBold.large.primaryForeground,
                                   ),
                                 if (newDay)
                                   Padding(
-                                    padding: const EdgeInsets.fromLTRB(
-                                        16, 10, 16, 2),
-                                    child: Text(
-                                      _formatDateHeader(txn.date),
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                        color: Colors.grey[600],
-                                        fontSize: 13,
-                                      ),
-                                    ),
+                                    padding: const EdgeInsets.fromLTRB(16, 10, 16, 2),
+                                    child: Text(_formatDateHeader(txn.date)).muted.small,
                                   ),
                                 TransactionCard(
                                   transaction: txn,

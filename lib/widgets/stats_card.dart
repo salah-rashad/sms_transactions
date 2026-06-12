@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:shadcn_flutter/shadcn_flutter.dart';
 
 class StatsCard extends StatelessWidget {
   final String title;
@@ -17,35 +17,26 @@ class StatsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(icon, color: color, size: 20),
-                const SizedBox(width: 8),
-                Text(
-                  title,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.grey[600],
-                      ),
-                ),
-              ],
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, color: color, size: 18),
+              const Gap(8),
+              Text(title).muted.small,
+            ],
+          ),
+          const Gap(8),
+          DefaultTextStyle(
+            style: Theme.of(context).typography.xLarge.copyWith(
+              color: color,
+              fontWeight: FontWeight.bold,
             ),
-            const SizedBox(height: 8),
-            DefaultTextStyle(
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: color,
-                    fontWeight: FontWeight.bold,
-                  ) ??
-                  const TextStyle(),
-              child: value,
-            ),
-          ],
-        ),
+            child: value,
+          ),
+        ],
       ),
     );
   }

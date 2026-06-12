@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:shadcn_flutter/shadcn_flutter.dart';
 
 class CurrencyText extends StatelessWidget {
   final double amount;
@@ -22,7 +22,7 @@ class CurrencyText extends StatelessWidget {
   Widget build(BuildContext context) {
     final effectiveStyle =
         style ??
-        Theme.of(context).textTheme.titleLarge?.copyWith(
+        Theme.of(context).typography.x2Large.copyWith(
           color: color,
           fontWeight: FontWeight.bold,
         );
@@ -34,7 +34,7 @@ class CurrencyText extends StatelessWidget {
       return RichText(
         text: TextSpan(
           text: '$prefix$formatted',
-          style: effectiveStyle?.copyWith(color: color),
+          style: effectiveStyle.copyWith(color: color),
         ),
       );
     }
@@ -47,11 +47,11 @@ class CurrencyText extends StatelessWidget {
         children: [
           TextSpan(
             text: intPart,
-            style: effectiveStyle?.copyWith(color: color),
+            style: effectiveStyle.copyWith(color: color),
           ),
           TextSpan(
             text: decPart,
-            style: effectiveStyle?.copyWith(
+            style: effectiveStyle.copyWith(
               color: color.withValues(alpha: 0.5),
             ),
           ),

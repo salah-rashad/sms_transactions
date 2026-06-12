@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:shadcn_flutter/shadcn_flutter.dart';
 import 'package:intl/intl.dart';
 import 'currency_text.dart';
 
@@ -38,10 +38,10 @@ class SalarySummaryTile extends StatelessWidget {
     final spentPercent = salary > 0 ? ((expense + savings) / salary).clamp(0.0, 1.0) : 0.0;
 
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
+      padding: EdgeInsets.zero,
+      child: GestureDetector(
         onTap: onTap,
+        behavior: HitTestBehavior.opaque,
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -53,36 +53,28 @@ class SalarySummaryTile extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          DateFormat.yMMMM().format(cycleStart),
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          _periodLabel,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[500],
-                          ),
-                        ),
+                        Text(DateFormat.yMMMM().format(cycleStart)).semiBold.large,
+                        const Gap(2),
+                        Text(_periodLabel).muted.xSmall,
                       ],
                     ),
                   ),
                   if (onTap != null)
-                    Icon(Icons.chevron_right, color: Colors.grey[400]),
+                    Icon(Icons.chevron_right, size: 20, color: Theme.of(context).colorScheme.mutedForeground),
                 ],
               ),
               const Divider(),
               CurrencyText(
                 amount: salary,
-                color: Colors.indigo,
-                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+                color: Theme.of(context).colorScheme.foreground,
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 15,
+                  color: Theme.of(context).colorScheme.foreground,
+                ),
                 prefix: 'Salary: ',
               ),
-              const SizedBox(height: 10),
+              const Gap(10),
               Row(
                 children: [
                   Expanded(
@@ -90,17 +82,10 @@ class SalarySummaryTile extends StatelessWidget {
                       borderRadius: BorderRadius.circular(4),
                       child: LinearProgressIndicator(
                         value: spentPercent,
-                        backgroundColor: Colors.green.withValues(alpha: 0.15),
-                        color: spentPercent > 0.9
-                            ? Colors.red
-                            : spentPercent > 0.7
-                                ? Colors.orange
-                                : Colors.green,
-                        minHeight: 8,
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const Gap(8),
                   Text(
                     '${(spentPercent * 100).toStringAsFixed(0)}%',
                     style: TextStyle(
@@ -115,7 +100,7 @@ class SalarySummaryTile extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 10),
+              const Gap(10),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -129,19 +114,19 @@ class SalarySummaryTile extends StatelessWidget {
           ),
         ),
       ),
-    );
+    ).withPadding(horizontal: 12, vertical: 4);
   }
 
   Widget _buildColumn(String label, double value, Color color) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: TextStyle(color: Colors.grey[600], fontSize: 12)),
-        const SizedBox(height: 4),
+        Text(label).muted.xSmall,
+        const Gap(4),
         CurrencyText(
           amount: value,
           color: color,
-          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: color),
           includeCurrency: false,
         ),
       ],

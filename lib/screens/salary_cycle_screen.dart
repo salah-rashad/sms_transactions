@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:shadcn_flutter/shadcn_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
@@ -39,8 +39,20 @@ class _SalaryCycleScreenState extends State<SalaryCycleScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.title ?? _periodLabel)),
-      body: Consumer<TransactionProvider>(
+      headers: [
+        AppBar(
+          title: Text(widget.title ?? _periodLabel),
+          leading: [
+            IconButton.ghost(
+              onPressed: () => Navigator.pop(context),
+              density: ButtonDensity.icon,
+              icon: const Icon(Icons.arrow_back),
+            ),
+          ],
+        ),
+        const Divider(),
+      ],
+      child: Consumer<TransactionProvider>(
         builder: (context, provider, _) {
           final inCycle = provider.transactions.where((t) {
             if (t.type == TransactionType.balanceCheck) return false;
@@ -66,28 +78,20 @@ class _SalaryCycleScreenState extends State<SalaryCycleScreen> {
             children: [
               Padding(
                 padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
-                child: SegmentedButton<_Filter>(
-                  segments: const [
-                    ButtonSegment(value: _Filter.all, label: Text('All')),
-                    ButtonSegment(
-                      value: _Filter.income,
-                      icon: Icon(Icons.arrow_downward, size: 16),
-                      label: Text('Income'),
-                    ),
-                    ButtonSegment(
-                      value: _Filter.expense,
-                      icon: Icon(Icons.arrow_upward, size: 16),
-                      label: Text('Expense'),
-                    ),
+                child: Tabs(
+                  index: _filter.index,
+                  onChanged: (i) => setState(() => _filter = _Filter.values[i]),
+                  children: const [
+                    TabItem(child: Text('All')),
+                    TabItem(child: Text('Income')),
+                    TabItem(child: Text('Expense')),
                   ],
-                  selected: {_filter},
-                  onSelectionChanged: (v) => setState(() => _filter = v.first),
                 ),
               ),
               Expanded(
                 child: filtered.isEmpty
-                    ? const Center(
-                        child: Text('No transactions in this period'),
+                    ? Center(
+                        child: const Text('No transactions in this period').muted,
                       )
                     : ListView.builder(
                         itemCount: filtered.length,
@@ -105,20 +109,8 @@ class _SalaryCycleScreenState extends State<SalaryCycleScreen> {
                             children: [
                               if (newDay)
                                 Padding(
-                                  padding: const EdgeInsets.fromLTRB(
-                                    16,
-                                    10,
-                                    16,
-                                    2,
-                                  ),
-                                  child: Text(
-                                    _formatDateHeader(txn.date),
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.grey[600],
-                                      fontSize: 13,
-                                    ),
-                                  ),
+                                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 2),
+                                  child: Text(_formatDateHeader(txn.date)).muted.small,
                                 ),
                               TransactionCard(
                                 transaction: txn,
