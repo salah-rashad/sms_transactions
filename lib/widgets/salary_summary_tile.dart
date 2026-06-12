@@ -142,6 +142,7 @@ class SalarySummaryTile extends StatelessWidget {
           amount: value,
           color: color,
           style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+          includeCurrency: false,
         ),
       ],
     );

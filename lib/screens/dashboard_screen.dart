@@ -155,14 +155,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 if (_summaryView == _SummaryView.overview)
                   ...provider.monthlyBreakdown.entries.map((entry) {
                     final parts = entry.key.split('-');
-                    final date = DateTime(
-                        int.parse(parts[0]), int.parse(parts[1]));
+                    final year = int.parse(parts[0]);
+                    final month = int.parse(parts[1]);
+                    final date = DateTime(year, month);
                     final label = DateFormat.yMMMM().format(date);
                     return MonthlySummaryTile(
                       monthLabel: label,
                       income: entry.value.income,
                       expense: entry.value.expense,
                       savings: entry.value.savings,
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => SalaryCycleScreen(
+                            cycleStart: DateTime(year, month),
+                            cycleEnd: DateTime(year, month + 1),
+                            title: label,
+                          ),
+                        ),
+                      ),
                     );
                   })
                 else

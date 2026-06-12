@@ -20,7 +20,7 @@ class TransactionCard extends StatelessWidget {
     Color iconColor;
     IconData iconData;
     if (isIncome) {
-      iconColor = Colors.green;
+      iconColor = transaction.isMarkedAsSalary ? Colors.indigo : Colors.green;
       iconData = Icons.arrow_downward;
     } else if (isBalanceCheck) {
       iconColor = Colors.blue;
@@ -31,6 +31,7 @@ class TransactionCard extends StatelessWidget {
     }
 
     return Card(
+      color: transaction.isMarkedAsSalary ? Colors.indigo.shade100 : null,
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       child: InkWell(
         onLongPress: isIncome ? onToggleSalary : null,
@@ -50,8 +51,10 @@ class TransactionCard extends StatelessWidget {
               ),
               if (transaction.isMarkedAsSalary)
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.indigo.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(4),
@@ -85,14 +88,16 @@ class TransactionCard extends StatelessWidget {
               CurrencyText(
                 amount: transaction.amount,
                 color: iconColor,
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
                 prefix: isIncome ? '+' : '-',
                 decimals: 2,
                 includeCurrency: false,
               ),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
                   color: Colors.grey[200],
                   borderRadius: BorderRadius.circular(4),
