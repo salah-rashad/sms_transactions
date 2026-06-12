@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 import '../providers/transaction_provider.dart';
 import '../widgets/stats_card.dart';
 import '../widgets/monthly_summary_tile.dart';
-import '../utils/currency.dart';
+import '../widgets/currency_text.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -56,8 +56,7 @@ class DashboardScreen extends StatelessWidget {
                       Expanded(
                         child: StatsCard(
                           title: 'Balance',
-                          value:
-                              formatEgp(provider.currentBalance),
+                          value: CurrencyText(amount: provider.currentBalance, color: Colors.blue),
                           color: Colors.blue,
                           icon: Icons.account_balance_wallet,
                         ),
@@ -72,8 +71,7 @@ class DashboardScreen extends StatelessWidget {
                       Expanded(
                         child: StatsCard(
                           title: 'Income',
-                          value:
-                              formatEgp(provider.totalIncome),
+                          value: CurrencyText(amount: provider.totalIncome, color: Colors.green),
                           color: Colors.green,
                           icon: Icons.trending_up,
                         ),
@@ -82,8 +80,7 @@ class DashboardScreen extends StatelessWidget {
                       Expanded(
                         child: StatsCard(
                           title: 'Expense',
-                          value:
-                              formatEgp(provider.totalExpense),
+                          value: CurrencyText(amount: provider.totalExpense, color: Colors.red),
                           color: Colors.red,
                           icon: Icons.trending_down,
                         ),
@@ -99,8 +96,7 @@ class DashboardScreen extends StatelessWidget {
                       Expanded(
                         child: StatsCard(
                           title: 'Savings (Pool)',
-                          value:
-                              formatEgp(provider.totalSavings),
+                          value: CurrencyText(amount: provider.totalSavings, color: Colors.indigo),
                           color: Colors.indigo,
                           icon: Icons.savings,
                         ),

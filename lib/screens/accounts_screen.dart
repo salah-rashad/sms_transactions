@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/transaction_provider.dart';
-import '../utils/currency.dart';
+import '../widgets/currency_text.dart';
 
 class AccountsScreen extends StatelessWidget {
   const AccountsScreen({super.key});
@@ -65,12 +65,12 @@ class AccountsScreen extends StatelessWidget {
                                   style: TextStyle(color: Colors.grey[600]),
                                 ),
                                 const SizedBox(height: 4),
-                                Text(
-                                  formatEgp(account.estimatedBalance),
-                                  style: TextStyle(
+                                CurrencyText(
+                                  amount: account.estimatedBalance,
+                                  color: Theme.of(context).primaryColor,
+                                  style: const TextStyle(
                                     fontSize: 22,
                                     fontWeight: FontWeight.bold,
-                                    color: Theme.of(context).primaryColor,
                                   ),
                                 ),
                               ],
@@ -111,12 +111,8 @@ class AccountsScreen extends StatelessWidget {
                                 ),
                                 const SizedBox(width: 8),
                                 Expanded(
-                                  child: Text(
-                                    'Last announced: ${formatEgp(account.announcedBalance!)}',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey[600],
-                                    ),
+                                  child: _AnnouncedBalanceText(
+                                    announcedBalance: account.announcedBalance!,
                                   ),
                                 ),
                               ],
@@ -132,6 +128,21 @@ class AccountsScreen extends StatelessWidget {
           );
         },
       ),
+    );
+  }
+}
+
+class _AnnouncedBalanceText extends StatelessWidget {
+  final double announcedBalance;
+  const _AnnouncedBalanceText({required this.announcedBalance});
+
+  @override
+  Widget build(BuildContext context) {
+    return CurrencyText(
+      amount: announcedBalance,
+      color: Colors.grey,
+      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal),
+      prefix: 'Last announced: ',
     );
   }
 }

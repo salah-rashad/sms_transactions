@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class StatsCard extends StatelessWidget {
   final String title;
-  final String value;
+  final Widget value;
   final Color color;
   final IconData icon;
 
@@ -36,12 +36,13 @@ class StatsCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
-            Text(
-              value,
+            DefaultTextStyle(
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     color: color,
                     fontWeight: FontWeight.bold,
-                  ),
+                  ) ??
+                  const TextStyle(),
+              child: value,
             ),
           ],
         ),

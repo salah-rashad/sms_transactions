@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../utils/currency.dart';
+import 'currency_text.dart';
 
 class MonthlySummaryTile extends StatelessWidget {
   final String monthLabel;
@@ -37,12 +37,22 @@ class MonthlySummaryTile extends StatelessWidget {
             if (salary > 0)
               Padding(
                 padding: const EdgeInsets.only(bottom: 12),
-                child: _buildColumn('Salary', salary, Colors.indigo),
+                child: CurrencyText(
+                  amount: salary,
+                  color: Colors.indigo,
+                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                  prefix: 'Salary: ',
+                ),
               ),
             if (savings > 0)
               Padding(
                 padding: const EdgeInsets.only(bottom: 12),
-                child: _buildColumn('Savings', savings, Colors.teal),
+                child: CurrencyText(
+                  amount: savings,
+                  color: Colors.teal,
+                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                  prefix: 'Savings: ',
+                ),
               ),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -65,12 +75,11 @@ class MonthlySummaryTile extends StatelessWidget {
       children: [
         Text(label, style: TextStyle(color: Colors.grey[600], fontSize: 12)),
         const SizedBox(height: 4),
-        Text(
-          formatEgp(value),
-          style: TextStyle(
-            color: color,
-            fontWeight: FontWeight.w600,
-          ),
+        CurrencyText(
+          amount: value,
+          color: color,
+          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+          includeCurrency: false,
         ),
       ],
     );

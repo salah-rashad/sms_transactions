@@ -3,7 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../providers/transaction_provider.dart';
 import '../models/money_pool.dart';
-import '../utils/currency.dart';
+import '../widgets/currency_text.dart';
 
 class MoneyPoolScreen extends StatelessWidget {
   const MoneyPoolScreen({super.key});
@@ -62,14 +62,14 @@ class MoneyPoolScreen extends StatelessWidget {
                 Expanded(
                   child: _buildStatItem(
                     'Contributed',
-                    formatEgp(pool.totalContributed, decimals: 0),
+                    CurrencyText(amount: pool.totalContributed, color: Colors.orange, decimals: 0),
                     Colors.orange,
                   ),
                 ),
                 Expanded(
                   child: _buildStatItem(
                     'Expected Return',
-                    formatEgp(pool.totalExpectedPayout, decimals: 0),
+                    CurrencyText(amount: pool.totalExpectedPayout, color: Colors.green, decimals: 0),
                     Colors.green,
                   ),
                 ),
@@ -81,14 +81,14 @@ class MoneyPoolScreen extends StatelessWidget {
                 Expanded(
                   child: _buildStatItem(
                     'Received',
-                    formatEgp(pool.totalReceived, decimals: 0),
+                    CurrencyText(amount: pool.totalReceived, color: Colors.blue, decimals: 0),
                     Colors.blue,
                   ),
                 ),
                 Expanded(
                   child: _buildStatItem(
                     'Net Position',
-                    formatEgp(pool.netPosition, decimals: 0),
+                    CurrencyText(amount: pool.netPosition, color: pool.netPosition >= 0 ? Colors.green : Colors.red, decimals: 0),
                     pool.netPosition >= 0 ? Colors.green : Colors.red,
                   ),
                 ),
@@ -100,19 +100,19 @@ class MoneyPoolScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildStatItem(String label, String value, Color color) {
+  Widget _buildStatItem(String label, Widget value, Color color) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(label, style: TextStyle(color: Colors.grey[600], fontSize: 12)),
         const SizedBox(height: 4),
-        Text(
-          value,
+        DefaultTextStyle(
           style: TextStyle(
             color: color,
             fontWeight: FontWeight.bold,
             fontSize: 16,
           ),
+          child: value,
         ),
       ],
     );
@@ -164,13 +164,15 @@ class MoneyPoolScreen extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text(
-                  formatEgp(next.amount, decimals: 0),
+                CurrencyText(
+                  amount: next.amount,
+                  color: Theme.of(context).primaryColor,
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
                     color: Theme.of(context).primaryColor,
                   ),
+                  decimals: 0,
                 ),
                 const SizedBox(height: 2),
                 Text(
@@ -239,9 +241,11 @@ class MoneyPoolScreen extends StatelessWidget {
                       child: Icon(Icons.savings, color: Colors.white, size: 20),
                     ),
                     title: Text(DateFormat.yMMMM().format(c.date)),
-                    trailing: Text(
-                      formatEgp(c.amount, decimals: 0),
+                    trailing: CurrencyText(
+                      amount: c.amount,
+                      color: Colors.orange,
                       style: const TextStyle(fontWeight: FontWeight.bold),
+                      decimals: 0,
                     ),
                   ),
                 ),
@@ -284,12 +288,14 @@ class MoneyPoolScreen extends StatelessWidget {
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    formatEgp(payout.amount, decimals: 0),
+                  CurrencyText(
+                    amount: payout.amount,
+                    color: payout.isReceived ? Colors.green : Colors.black87,
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       color: payout.isReceived ? Colors.green : null,
                     ),
+                    decimals: 0,
                   ),
                   const SizedBox(width: 8),
                   SizedBox(
