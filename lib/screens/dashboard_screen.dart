@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../providers/transaction_provider.dart';
 import '../widgets/stats_card.dart';
 import '../widgets/monthly_summary_tile.dart';
+import '../utils/currency.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -56,7 +57,7 @@ class DashboardScreen extends StatelessWidget {
                         child: StatsCard(
                           title: 'Balance',
                           value:
-                              '${provider.currentBalance.toStringAsFixed(2)} EGP',
+                              formatEgp(provider.currentBalance),
                           color: Colors.blue,
                           icon: Icons.account_balance_wallet,
                         ),
@@ -72,7 +73,7 @@ class DashboardScreen extends StatelessWidget {
                         child: StatsCard(
                           title: 'Income',
                           value:
-                              '${provider.totalIncome.toStringAsFixed(2)} EGP',
+                              formatEgp(provider.totalIncome),
                           color: Colors.green,
                           icon: Icons.trending_up,
                         ),
@@ -82,7 +83,7 @@ class DashboardScreen extends StatelessWidget {
                         child: StatsCard(
                           title: 'Expense',
                           value:
-                              '${provider.totalExpense.toStringAsFixed(2)} EGP',
+                              formatEgp(provider.totalExpense),
                           color: Colors.red,
                           icon: Icons.trending_down,
                         ),
@@ -99,7 +100,7 @@ class DashboardScreen extends StatelessWidget {
                         child: StatsCard(
                           title: 'Savings (Pool)',
                           value:
-                              '${provider.totalSavings.toStringAsFixed(2)} EGP',
+                              formatEgp(provider.totalSavings),
                           color: Colors.indigo,
                           icon: Icons.savings,
                         ),

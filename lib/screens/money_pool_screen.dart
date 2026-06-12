@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../providers/transaction_provider.dart';
 import '../models/money_pool.dart';
+import '../utils/currency.dart';
 
 class MoneyPoolScreen extends StatelessWidget {
   const MoneyPoolScreen({super.key});
@@ -61,14 +62,14 @@ class MoneyPoolScreen extends StatelessWidget {
                 Expanded(
                   child: _buildStatItem(
                     'Contributed',
-                    '${pool.totalContributed.toStringAsFixed(0)} EGP',
+                    formatEgp(pool.totalContributed, decimals: 0),
                     Colors.orange,
                   ),
                 ),
                 Expanded(
                   child: _buildStatItem(
                     'Expected Return',
-                    '${pool.totalExpectedPayout.toStringAsFixed(0)} EGP',
+                    formatEgp(pool.totalExpectedPayout, decimals: 0),
                     Colors.green,
                   ),
                 ),
@@ -80,14 +81,14 @@ class MoneyPoolScreen extends StatelessWidget {
                 Expanded(
                   child: _buildStatItem(
                     'Received',
-                    '${pool.totalReceived.toStringAsFixed(0)} EGP',
+                    formatEgp(pool.totalReceived, decimals: 0),
                     Colors.blue,
                   ),
                 ),
                 Expanded(
                   child: _buildStatItem(
                     'Net Position',
-                    '${pool.netPosition.toStringAsFixed(0)} EGP',
+                    formatEgp(pool.netPosition, decimals: 0),
                     pool.netPosition >= 0 ? Colors.green : Colors.red,
                   ),
                 ),
@@ -164,7 +165,7 @@ class MoneyPoolScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  '${next.amount.toStringAsFixed(0)} EGP',
+                  formatEgp(next.amount, decimals: 0),
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
@@ -239,7 +240,7 @@ class MoneyPoolScreen extends StatelessWidget {
                     ),
                     title: Text(DateFormat.yMMMM().format(c.date)),
                     trailing: Text(
-                      '${c.amount.toStringAsFixed(0)} EGP',
+                      formatEgp(c.amount, decimals: 0),
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),
@@ -284,7 +285,7 @@ class MoneyPoolScreen extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    '${payout.amount.toStringAsFixed(0)} EGP',
+                    formatEgp(payout.amount, decimals: 0),
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       color: payout.isReceived ? Colors.green : null,

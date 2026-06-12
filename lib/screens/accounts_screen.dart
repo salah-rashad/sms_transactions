@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/transaction_provider.dart';
+import '../utils/currency.dart';
 
 class AccountsScreen extends StatelessWidget {
   const AccountsScreen({super.key});
@@ -65,7 +66,7 @@ class AccountsScreen extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  '${account.estimatedBalance.toStringAsFixed(2)} EGP',
+                                  formatEgp(account.estimatedBalance),
                                   style: TextStyle(
                                     fontSize: 22,
                                     fontWeight: FontWeight.bold,
@@ -111,7 +112,7 @@ class AccountsScreen extends StatelessWidget {
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
-                                    'Last announced: ${account.announcedBalance!.toStringAsFixed(2)} EGP',
+                                    'Last announced: ${formatEgp(account.announcedBalance!)}',
                                     style: TextStyle(
                                       fontSize: 12,
                                       color: Colors.grey[600],

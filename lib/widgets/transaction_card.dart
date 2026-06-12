@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/transaction.dart';
+import '../utils/currency.dart';
 
 class TransactionCard extends StatelessWidget {
   final Transaction transaction;
@@ -84,7 +85,7 @@ class TransactionCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                '${isIncome ? '+' : '-'}${transaction.amount.toStringAsFixed(2)} EGP',
+                '${isIncome ? '+' : '-'}${formatEgp(transaction.amount)}',
                 style: TextStyle(
                   color: iconColor,
                   fontWeight: FontWeight.bold,

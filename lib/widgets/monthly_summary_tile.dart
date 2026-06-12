@@ -66,7 +66,7 @@ class MonthlySummaryTile extends StatelessWidget {
         Text(label, style: TextStyle(color: Colors.grey[600], fontSize: 12)),
         const SizedBox(height: 4),
         Text(
-          '${formatEgp(value)}',
+          formatEgp(value),
           style: TextStyle(
             color: color,
             fontWeight: FontWeight.w600,
