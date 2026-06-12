@@ -39,7 +39,7 @@ class TransactionProvider extends ChangeNotifier {
 
   double get totalExpense => rawExpense - totalSavings;
 
-  double get currentBalance => totalIncome - totalExpense - totalSavings;
+  double get currentBalance => totalIncome - rawExpense - totalSavings;
 
   List<Account> get accounts {
     final bankTxns = _transactions
@@ -56,19 +56,25 @@ class TransactionProvider extends ChangeNotifier {
         .where((t) => t.type == TransactionType.expense)
         .fold(0.0, (sum, t) => sum + t.amount);
 
-    double? bankAnnounced;
+    Transaction? latestBankWithBalance;
     for (final t in bankTxns) {
       if (t.balance != null) {
-        bankAnnounced ??= t.balance;
+        if (latestBankWithBalance == null || t.date.isAfter(latestBankWithBalance.date)) {
+          latestBankWithBalance = t;
+        }
       }
     }
+    final bankAnnounced = latestBankWithBalance?.balance;
 
-    double? vfAnnounced;
+    Transaction? latestVfWithBalance;
     for (final t in vfTxns) {
       if (t.balance != null) {
-        vfAnnounced ??= t.balance;
+        if (latestVfWithBalance == null || t.date.isAfter(latestVfWithBalance.date)) {
+          latestVfWithBalance = t;
+        }
       }
     }
+    final vfAnnounced = latestVfWithBalance?.balance;
 
     return [
       Account(
@@ -225,7 +231,7 @@ class TransactionProvider extends ChangeNotifier {
         otherIncome: otherIncome,
         expense: expense,
         savings: savings,
-        remaining: salaryTxn.amount - expense - savings,
+        remaining: salaryTxn.amount + otherIncome - expense - savings,
         cycleStart: cycleStart,
         cycleEnd: cycleEnd,
       );

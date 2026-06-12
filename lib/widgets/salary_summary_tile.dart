@@ -35,7 +35,7 @@ class SalarySummaryTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final spentPercent = salary > 0 ? (expense / salary).clamp(0.0, 1.0) : 0.0;
+    final spentPercent = salary > 0 ? ((expense + savings) / salary).clamp(0.0, 1.0) : 0.0;
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),

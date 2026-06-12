@@ -256,8 +256,11 @@ class MoneyPoolScreen extends StatelessWidget {
 
   Widget _buildPayoutScheduleSection(
       BuildContext context, TransactionProvider provider, MoneyPool pool) {
-    final sortedPayouts = List<PoolPayout>.from(pool.payouts)
-      ..sort((a, b) => a.date.compareTo(b.date));
+    final sortedPayouts = pool.payouts
+        .asMap()
+        .entries
+        .toList()
+      ..sort((a, b) => a.value.date.compareTo(b.value.date));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -267,7 +270,7 @@ class MoneyPoolScreen extends StatelessWidget {
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
-        ...sortedPayouts.asMap().entries.map((entry) {
+        ...sortedPayouts.map((entry) {
           final index = entry.key;
           final payout = entry.value;
           final isNext = pool.nextPayout == payout;
