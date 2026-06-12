@@ -143,7 +143,7 @@ class SmsParser {
     final date = sms.date ?? DateTime.now();
 
 
-    final balanceRegex = RegExp(r'رصيدك\s+([\d,]+\.?\d*)');
+    final balanceRegex = RegExp(r'رصيد(?:ك| حسابك الحالي)\s+([\d,]+\.?\d*)');
     final balanceMatch = balanceRegex.firstMatch(body);
     final balance =
         balanceMatch != null ? _parseAmount(balanceMatch.group(1)!) : null;
@@ -170,7 +170,7 @@ class SmsParser {
     final date = sms.date ?? DateTime.now();
 
 
-    final balanceRegex = RegExp(r'رصيدك\s+([\d,]+\.?\d*)');
+    final balanceRegex = RegExp(r'رصيد(?:ك| حسابك الحالي)\s+([\d,]+\.?\d*)');
     final balanceMatch = balanceRegex.firstMatch(body);
     final balance =
         balanceMatch != null ? _parseAmount(balanceMatch.group(1)!) : null;

@@ -39,7 +39,7 @@ class TransactionProvider extends ChangeNotifier {
 
   double get totalExpense => rawExpense - totalSavings;
 
-  double get currentBalance => totalIncome - rawExpense - totalSavings;
+  double get currentBalance => totalIncome - rawExpense;
 
   List<Account> get accounts {
     final bankTxns = _transactions
@@ -53,6 +53,13 @@ class TransactionProvider extends ChangeNotifier {
         .where((t) => t.type == TransactionType.income)
         .fold(0.0, (sum, t) => sum + t.amount);
     final bankExpense = bankTxns
+        .where((t) => t.type == TransactionType.expense)
+        .fold(0.0, (sum, t) => sum + t.amount);
+
+    final vfIncome = vfTxns
+        .where((t) => t.type == TransactionType.income)
+        .fold(0.0, (sum, t) => sum + t.amount);
+    final vfExpense = vfTxns
         .where((t) => t.type == TransactionType.expense)
         .fold(0.0, (sum, t) => sum + t.amount);
 
@@ -76,18 +83,52 @@ class TransactionProvider extends ChangeNotifier {
     }
     final vfAnnounced = latestVfWithBalance?.balance;
 
+    double bankEstimated;
+    if (bankAnnounced != null && latestBankWithBalance != null) {
+      double adjustment = 0;
+      for (final t in bankTxns) {
+        if (t.type == TransactionType.balanceCheck) continue;
+        if (!t.date.isAfter(latestBankWithBalance.date)) continue;
+        if (t.type == TransactionType.income) {
+          adjustment += t.amount;
+        } else if (t.type == TransactionType.expense) {
+          adjustment -= t.amount;
+        }
+      }
+      bankEstimated = bankAnnounced + adjustment;
+    } else {
+      bankEstimated = bankIncome - bankExpense;
+    }
+
+    double vfEstimated;
+    if (vfAnnounced != null && latestVfWithBalance != null) {
+      double adjustment = 0;
+      for (final t in vfTxns) {
+        if (t.type == TransactionType.balanceCheck) continue;
+        if (!t.date.isAfter(latestVfWithBalance.date)) continue;
+        if (t.type == TransactionType.income) {
+          adjustment += t.amount;
+        } else if (t.type == TransactionType.expense) {
+          adjustment -= t.amount;
+        }
+      }
+      vfEstimated = vfAnnounced + adjustment;
+    } else {
+      vfEstimated = vfIncome - vfExpense;
+    }
+
     return [
       Account(
         source: AccountSource.bankAlAhly,
         displayName: 'BanK-AlAhly',
-        estimatedBalance: bankIncome - bankExpense,
+        estimatedBalance: bankEstimated,
         announcedBalance: bankAnnounced,
         transactionCount: bankTxns.length,
       ),
       Account(
         source: AccountSource.vfCash,
         displayName: 'VF-Cash',
-        estimatedBalance: (vfAnnounced ?? 0.0),
+        estimatedBalance: vfEstimated,
         announcedBalance: vfAnnounced,
         transactionCount: vfTxns.length,
       ),
