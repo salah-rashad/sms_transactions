@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/transaction.dart';
 import '../models/account.dart';
+import '../models/money_pool.dart';
 import '../services/sms_service.dart';
 import '../services/sms_parser.dart';
 
@@ -10,18 +11,24 @@ class TransactionProvider extends ChangeNotifier {
   List<Transaction> _transactions = [];
   bool _isLoading = false;
   String? _error;
+  final MoneyPool _moneyPool = MoneyPool();
 
   List<Transaction> get transactions => _transactions;
   bool get isLoading => _isLoading;
   String? get error => _error;
+  MoneyPool get moneyPool => _moneyPool;
 
   double get totalIncome => _transactions
       .where((t) => t.type == TransactionType.income)
       .fold(0.0, (sum, t) => sum + t.amount);
 
-  double get totalExpense => _transactions
+  double get rawExpense => _transactions
       .where((t) => t.type == TransactionType.expense)
       .fold(0.0, (sum, t) => sum + t.amount);
+
+  double get totalSavings => _moneyPool.totalContributed;
+
+  double get totalExpense => rawExpense - totalSavings;
 
   double get currentBalance => totalIncome - totalExpense;
 
@@ -93,32 +100,74 @@ class TransactionProvider extends ChangeNotifier {
     return t.date;
   }
 
-  Map<String, ({double income, double expense, double salary})> get monthlyBreakdown {
-    final map = <String, ({double income, double expense, double salary})>{};
+  Map<String, ({double income, double expense, double salary, double savings})> get monthlyBreakdown {
+    final savingsMap = <String, double>{};
+    for (final c in _moneyPool.contributions) {
+      final key = '${c.date.year}-${c.date.month.toString().padLeft(2, '0')}';
+      savingsMap[key] = (savingsMap[key] ?? 0.0) + c.amount;
+    }
+
+    final map = <String, ({double income, double expense, double salary, double savings})>{};
 
     for (final t in _transactions) {
       if (t.type == TransactionType.balanceCheck) continue;
       final effectiveDate = _effectiveMonthDate(t);
       final key =
           '${effectiveDate.year}-${effectiveDate.month.toString().padLeft(2, '0')}';
-      final existing = map[key] ?? (income: 0.0, expense: 0.0, salary: 0.0);
+      final existing = map[key] ?? (income: 0.0, expense: 0.0, salary: 0.0, savings: 0.0);
       if (t.type == TransactionType.income) {
         map[key] = (
           income: existing.income + t.amount,
           expense: existing.expense,
           salary: existing.salary + (_isSalary(t) ? t.amount : 0.0),
+          savings: existing.savings,
         );
       } else {
         map[key] = (
           income: existing.income,
           expense: existing.expense + t.amount,
           salary: existing.salary,
+          savings: existing.savings,
         );
       }
     }
 
+    for (final entry in savingsMap.entries) {
+      final existing = map[entry.key] ?? (income: 0.0, expense: 0.0, salary: 0.0, savings: 0.0);
+      map[entry.key] = (
+        income: existing.income,
+        expense: existing.expense - entry.value,
+        salary: existing.salary,
+        savings: existing.savings + entry.value,
+      );
+    }
+
     final sortedKeys = map.keys.toList()..sort((a, b) => b.compareTo(a));
     return {for (final k in sortedKeys) k: map[k]!};
+  }
+
+  void addPoolContribution(double amount, DateTime date) {
+    final id = 'pool-${date.millisecondsSinceEpoch}';
+    _moneyPool.contributions.add(PoolContribution(
+      id: id,
+      date: date,
+      amount: amount,
+    ));
+    _moneyPool.contributions.sort((a, b) => b.date.compareTo(a.date));
+    notifyListeners();
+  }
+
+  void removePoolContribution(String id) {
+    _moneyPool.contributions.removeWhere((c) => c.id == id);
+    notifyListeners();
+  }
+
+  void togglePayoutReceived(int payoutIndex) {
+    if (payoutIndex >= 0 && payoutIndex < _moneyPool.payouts.length) {
+      _moneyPool.payouts[payoutIndex].isReceived =
+          !_moneyPool.payouts[payoutIndex].isReceived;
+      notifyListeners();
+    }
   }
 
   Future<void> loadTransactions() async {

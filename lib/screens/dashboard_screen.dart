@@ -90,6 +90,23 @@ class DashboardScreen extends StatelessWidget {
                     ],
                   ),
                 ),
+                const SizedBox(height: 8),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: StatsCard(
+                          title: 'Savings (Pool)',
+                          value:
+                              '${provider.totalSavings.toStringAsFixed(2)} EGP',
+                          color: Colors.indigo,
+                          icon: Icons.savings,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
                 const SizedBox(height: 16),
                 const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 16),

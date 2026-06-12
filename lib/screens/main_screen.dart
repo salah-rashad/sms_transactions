@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dashboard_screen.dart';
 import 'transactions_screen.dart';
 import 'accounts_screen.dart';
+import 'money_pool_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -17,6 +18,7 @@ class _MainScreenState extends State<MainScreen> {
     DashboardScreen(),
     TransactionsScreen(),
     AccountsScreen(),
+    MoneyPoolScreen(),
   ];
 
   @override
@@ -29,6 +31,7 @@ class _MainScreenState extends State<MainScreen> {
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (index) => setState(() => _currentIndex = index),
+        type: BottomNavigationBarType.fixed,
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.dashboard),
@@ -41,6 +44,10 @@ class _MainScreenState extends State<MainScreen> {
           BottomNavigationBarItem(
             icon: Icon(Icons.account_balance_wallet),
             label: 'Accounts',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.groups),
+            label: 'Pool',
           ),
         ],
       ),
