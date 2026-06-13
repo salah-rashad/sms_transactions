@@ -5,7 +5,8 @@ extension ThemeExtensions on BuildContext {
   ThemeData get theme => Theme.of(this);
 
   ColorScheme get colorScheme => theme.colorScheme;
+
   TextTheme get textTheme => theme.textTheme;
 
-  AppColors get appColors => Theme.of(this).extension<AppColors>()!;
+  AppColors get appColors => theme.extension<AppColors>()!;
 }
