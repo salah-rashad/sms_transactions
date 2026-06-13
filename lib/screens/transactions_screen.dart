@@ -6,6 +6,8 @@ import '../models/transaction.dart';
 import '../providers/transaction_provider.dart';
 import '../widgets/transaction_card.dart';
 
+typedef _AccountOption = ({AccountSource source, String label});
+
 enum _Filter { all, income, expense }
 
 class _DateFilter {
@@ -61,6 +63,7 @@ class TransactionsScreen extends StatefulWidget {
 class _TransactionsScreenState extends State<TransactionsScreen> {
   _Filter _typeFilter = _Filter.all;
   List<_DateFilter> _dateFilters = const [];
+  Set<AccountSource> _accountFilters = const {};
 
   @override
   void initState() {
@@ -81,11 +84,14 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
   }
 
   bool get _hasActiveFilters =>
-      _typeFilter != _Filter.all || _dateFilters.isNotEmpty;
+      _typeFilter != _Filter.all ||
+      _dateFilters.isNotEmpty ||
+      _accountFilters.isNotEmpty;
 
   void _clearAll() => setState(() {
         _typeFilter = _Filter.all;
         _dateFilters = const [];
+        _accountFilters = const {};
       });
 
   Future<void> _openFilterSheet(BuildContext context) async {
@@ -113,6 +119,11 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       ));
     }
 
+    final accountOptions = <_AccountOption>[
+      for (final a in provider.accounts)
+        if (a.transactionCount > 0) (source: a.source, label: a.displayName),
+    ];
+
     if (!context.mounted) return;
     final result = await showModalBottomSheet<_FilterSheetResult>(
       context: context,
@@ -123,6 +134,8 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
         dateFilters: _dateFilters,
         cycleFilters: cycleFilters,
         monthFilters: monthFilters,
+        accountOptions: accountOptions,
+        accountFilters: _accountFilters,
       ),
     );
 
@@ -130,6 +143,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       setState(() {
         _typeFilter = result.typeFilter;
         _dateFilters = result.dateFilters;
+        _accountFilters = result.accountFilters;
       });
     }
   }
@@ -176,6 +190,10 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
               return false;
             }
             if (dateRestricted && !_dateFilters.any((f) => f.matches(t.date))) {
+              return false;
+            }
+            if (_accountFilters.isNotEmpty &&
+                !_accountFilters.contains(t.source)) {
               return false;
             }
             return true;
@@ -258,6 +276,8 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       child: Wrap(
         spacing: 8,
         runSpacing: 4,
+        alignment: WrapAlignment.start,
+        runAlignment: WrapAlignment.start,
         children: [
           if (_typeFilter != _Filter.all)
             InputChip(
@@ -281,9 +301,19 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                     _dateFilters.where((d) => d != f).toList(),
               ),
             ),
-          ActionChip(
-            label: const Text('Clear all'),
+          for (final source in _accountFilters)
+            InputChip(
+              avatar: const Icon(Icons.account_balance_wallet_outlined,
+                  size: 14),
+              label: Text(_accountLabel(context, source)),
+              onDeleted: () => setState(
+                () => _accountFilters =
+                    _accountFilters.where((s) => s != source).toSet(),
+              ),
+            ),
+          TextButton(
             onPressed: _clearAll,
+            child: const Text('Clear all'),
           ),
         ],
       ),
@@ -292,6 +322,15 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
 
   bool _sameDay(DateTime a, DateTime b) =>
       a.year == b.year && a.month == b.month && a.day == b.day;
+
+  String _accountLabel(BuildContext context, AccountSource source) {
+    final account =
+        context.read<TransactionProvider>().accounts.firstWhere(
+              (a) => a.source == source,
+              orElse: () => throw StateError('Missing account'),
+            );
+    return account.displayName;
+  }
 
   bool _sameMonth(DateTime a, DateTime b) =>
       a.year == b.year && a.month == b.month;
@@ -311,7 +350,9 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
 class _FilterSheetResult {
   final _Filter typeFilter;
   final List<_DateFilter> dateFilters;
-  const _FilterSheetResult(this.typeFilter, this.dateFilters);
+  final Set<AccountSource> accountFilters;
+  const _FilterSheetResult(
+      this.typeFilter, this.dateFilters, this.accountFilters);
 }
 
 class _FilterSheet extends StatefulWidget {
@@ -319,12 +360,16 @@ class _FilterSheet extends StatefulWidget {
   final List<_DateFilter> dateFilters;
   final List<_DateFilter> cycleFilters;
   final List<_DateFilter> monthFilters;
+  final List<_AccountOption> accountOptions;
+  final Set<AccountSource> accountFilters;
 
   const _FilterSheet({
     required this.typeFilter,
     required this.dateFilters,
     required this.cycleFilters,
     required this.monthFilters,
+    required this.accountOptions,
+    required this.accountFilters,
   });
 
   @override
@@ -334,12 +379,14 @@ class _FilterSheet extends StatefulWidget {
 class _FilterSheetState extends State<_FilterSheet> {
   late _Filter _type;
   late List<_DateFilter> _dates;
+  late Set<AccountSource> _accounts;
 
   @override
   void initState() {
     super.initState();
     _type = widget.typeFilter;
     _dates = List.of(widget.dateFilters);
+    _accounts = Set.of(widget.accountFilters);
   }
 
   bool _isSelected(_DateFilter f) => _dates.any((d) => d == f);
@@ -357,11 +404,23 @@ class _FilterSheetState extends State<_FilterSheet> {
   void _reset() => setState(() {
         _type = _Filter.all;
         _dates = const [];
+        _accounts = {};
       });
+
+  void _toggleAccount(AccountSource source) {
+    setState(() {
+      if (_accounts.contains(source)) {
+        _accounts.remove(source);
+      } else {
+        _accounts.add(source);
+      }
+    });
+  }
 
   int get _resultCount {
     final txns = context.read<TransactionProvider>().transactions;
     final dateRestricted = _dates.isNotEmpty;
+    final accountRestricted = _accounts.isNotEmpty;
     var n = 0;
     for (final t in txns) {
       if (t.type == TransactionType.balanceCheck) continue;
@@ -370,6 +429,7 @@ class _FilterSheetState extends State<_FilterSheet> {
         continue;
       }
       if (dateRestricted && !_dates.any((f) => f.matches(t.date))) continue;
+      if (accountRestricted && !_accounts.contains(t.source)) continue;
       n++;
     }
     return n;
@@ -446,6 +506,17 @@ class _FilterSheetState extends State<_FilterSheet> {
             child: ListView(
               padding: const EdgeInsets.only(top: 8, bottom: 8),
               children: [
+                if (widget.accountOptions.isNotEmpty) ...[
+                  _sectionHeader(context, 'Accounts'),
+                  for (final opt in widget.accountOptions)
+                    CheckboxListTile(
+                      dense: true,
+                      value: _accounts.contains(opt.source),
+                      onChanged: (_) => _toggleAccount(opt.source),
+                      title: Text(opt.label),
+                    ),
+                  const Divider(height: 1),
+                ],
                 if (widget.cycleFilters.isNotEmpty) ...[
                   _sectionHeader(context, 'Salary cycles'),
                   for (final f in widget.cycleFilters)
@@ -477,7 +548,7 @@ class _FilterSheetState extends State<_FilterSheet> {
               child: FilledButton(
                 onPressed: () => Navigator.pop(
                   context,
-                  _FilterSheetResult(_type, _dates),
+                  _FilterSheetResult(_type, _dates, Set.of(_accounts)),
                 ),
                 child: Text('Show $_resultCount transactions'),
               ),
