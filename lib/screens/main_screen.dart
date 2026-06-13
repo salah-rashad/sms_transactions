@@ -3,6 +3,7 @@ import 'dashboard_screen.dart';
 import 'transactions_screen.dart';
 import 'accounts_screen.dart';
 import 'money_pool_screen.dart';
+import 'settings_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -19,6 +20,7 @@ class _MainScreenState extends State<MainScreen> {
     TransactionsScreen(),
     AccountsScreen(),
     MoneyPoolScreen(),
+    SettingsScreen(),
   ];
 
   @override
@@ -48,6 +50,10 @@ class _MainScreenState extends State<MainScreen> {
           BottomNavigationBarItem(
             icon: Icon(Icons.groups),
             label: 'Pool',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.settings),
+            label: 'Settings',
           ),
         ],
       ),

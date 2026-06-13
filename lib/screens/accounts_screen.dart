@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/transaction_provider.dart';
 import '../widgets/currency_text.dart';
-import '../widgets/theme_mode_button.dart';
 
 class AccountsScreen extends StatelessWidget {
   const AccountsScreen({super.key});
@@ -12,10 +11,7 @@ class AccountsScreen extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Accounts'),
-        actions: const [ThemeModeButton()],
-      ),
+      appBar: AppBar(title: const Text('Accounts')),
       body: Consumer<TransactionProvider>(
         builder: (context, provider, _) {
           if (provider.isLoading) {
