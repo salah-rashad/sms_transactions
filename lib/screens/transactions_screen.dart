@@ -439,6 +439,7 @@ class _FilterSheetState extends State<_FilterSheet> {
               ],
               selected: {_type},
               onSelectionChanged: (s) => setState(() => _type = s.first),
+              showSelectedIcon: false,
             ),
           ),
           Expanded(
