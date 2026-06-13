@@ -7,8 +7,7 @@ import '../widgets/stats_card.dart';
 import '../widgets/monthly_summary_tile.dart';
 import '../widgets/salary_summary_tile.dart';
 import '../widgets/currency_text.dart';
-import '../widgets/theme_mode_button.dart';
-import 'salary_cycle_screen.dart';
+import 'transactions_screen.dart';
 
 enum _SummaryView { overview, salary }
 
@@ -28,7 +27,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Dashboard'),
-        actions: const [ThemeModeButton()],
       ),
       body: Consumer<TransactionProvider>(
         builder: (context, provider, _) {
@@ -174,10 +172,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       onTap: () => Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => SalaryCycleScreen(
-                            cycleStart: DateTime(year, month),
-                            cycleEnd: DateTime(year, month + 1),
-                            title: label,
+                          builder: (_) => TransactionsScreen(
+                            initialRangeStart: DateTime(year, month),
+                            initialRangeEnd: DateTime(year, month + 1),
+                            initialRangeLabel: label,
                           ),
                         ),
                       ),
@@ -197,9 +195,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       onTap: () => Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => SalaryCycleScreen(
-                            cycleStart: v.cycleStart,
-                            cycleEnd: v.cycleEnd,
+                          builder: (_) => TransactionsScreen(
+                            initialRangeStart: v.cycleStart,
+                            initialRangeEnd: v.cycleEnd,
                           ),
                         ),
                       ),
