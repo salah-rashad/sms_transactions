@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import '../models/transaction.dart';
 import '../providers/transaction_provider.dart';
 import '../widgets/transaction_card.dart';
-import '../widgets/theme_mode_button.dart';
 
 enum _Filter { all, income, expense }
 
