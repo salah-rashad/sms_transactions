@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_colors.dart';
 import 'currency_text.dart';
 
 class MonthlySummaryTile extends StatelessWidget {
@@ -19,6 +20,10 @@ class MonthlySummaryTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
+    final scheme = Theme.of(context).colorScheme;
+    final netPositive = income - expense >= 0;
+
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       child: InkWell(
@@ -41,7 +46,7 @@ class MonthlySummaryTile extends StatelessWidget {
                     ),
                   ),
                   if (onTap != null)
-                    Icon(Icons.chevron_right, color: Colors.grey[400]),
+                    Icon(Icons.chevron_right, color: scheme.outlineVariant),
                 ],
               ),
               const Divider(),
@@ -50,7 +55,7 @@ class MonthlySummaryTile extends StatelessWidget {
                   padding: const EdgeInsets.only(bottom: 12),
                   child: CurrencyText(
                     amount: savings,
-                    color: Colors.teal,
+                    color: colors.savings,
                     style: const TextStyle(
                         fontWeight: FontWeight.w600, fontSize: 14),
                     prefix: 'Savings: ',
@@ -59,10 +64,14 @@ class MonthlySummaryTile extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  _buildColumn('Income', income, Colors.green),
-                  _buildColumn('Expense', expense, Colors.red),
-                  _buildColumn('Net', income - expense,
-                      income - expense >= 0 ? Colors.green : Colors.red),
+                  _buildColumn(context, 'Income', income, colors.income),
+                  _buildColumn(context, 'Expense', expense, colors.expense),
+                  _buildColumn(
+                    context,
+                    'Net',
+                    income - expense,
+                    netPositive ? colors.income : colors.expense,
+                  ),
                 ],
               ),
             ],
@@ -72,11 +81,17 @@ class MonthlySummaryTile extends StatelessWidget {
     );
   }
 
-  Widget _buildColumn(String label, double value, Color color) {
+  Widget _buildColumn(BuildContext context, String label, double value, Color color) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+        Text(
+          label,
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+            fontSize: 12,
+          ),
+        ),
         const SizedBox(height: 4),
         CurrencyText(
           amount: value,

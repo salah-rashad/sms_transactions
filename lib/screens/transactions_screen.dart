@@ -5,6 +5,7 @@ import '../models/transaction.dart';
 import '../providers/transaction_provider.dart';
 import '../services/export_service.dart';
 import '../widgets/transaction_card.dart';
+import '../widgets/theme_mode_button.dart';
 
 enum _Filter { all, income, expense }
 
@@ -27,7 +28,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Export failed: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text('Export failed: $e'), backgroundColor: Theme.of(context).colorScheme.error),
         );
       }
     } finally {
@@ -41,6 +42,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       appBar: AppBar(
         title: const Text('Transactions'),
         actions: [
+          const ThemeModeButton(),
           Consumer<TransactionProvider>(
             builder: (context, provider, _) {
               final exportable = provider.transactions
@@ -135,7 +137,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                                       style: TextStyle(
                                         fontSize: 18,
                                         fontWeight: FontWeight.bold,
-                                        color: Theme.of(context).primaryColor,
+                                        color: Theme.of(context).colorScheme.primary,
                                       ),
                                     ),
                                   ),
@@ -145,10 +147,10 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                                         16, 10, 16, 2),
                                     child: Text(
                                       _formatDateHeader(txn.date),
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                        color: Colors.grey[600],
-                                        fontSize: 13,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                      fontSize: 13,
                                       ),
                                     ),
                                   ),
