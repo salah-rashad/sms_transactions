@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/transaction.dart';
+import '../theme/app_colors.dart';
 import '../widgets/currency_text.dart';
 
 class TransactionCard extends StatelessWidget {
@@ -16,22 +17,26 @@ class TransactionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isIncome = transaction.type == TransactionType.income;
     final isBalanceCheck = transaction.type == TransactionType.balanceCheck;
+    final colors = context.appColors;
+    final scheme = Theme.of(context).colorScheme;
 
     Color iconColor;
     IconData iconData;
     if (isIncome) {
-      iconColor = transaction.isMarkedAsSalary ? Colors.indigo : Colors.green;
+      iconColor = transaction.isMarkedAsSalary ? scheme.primary : colors.income;
       iconData = Icons.arrow_downward;
     } else if (isBalanceCheck) {
-      iconColor = Colors.blue;
+      iconColor = colors.balance;
       iconData = Icons.info_outline;
     } else {
-      iconColor = Colors.red;
+      iconColor = colors.expense;
       iconData = Icons.arrow_upward;
     }
 
     return Card(
-      color: transaction.isMarkedAsSalary ? Colors.indigo.shade100 : null,
+      color: transaction.isMarkedAsSalary
+          ? scheme.primary.withValues(alpha: 0.08)
+          : null,
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       child: InkWell(
         onLongPress: isIncome ? onToggleSalary : null,
@@ -56,19 +61,19 @@ class TransactionCard extends StatelessWidget {
                     vertical: 2,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.indigo.withValues(alpha: 0.1),
+                    color: scheme.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(4),
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.work_outline, size: 12, color: Colors.indigo),
-                      SizedBox(width: 3),
+                      Icon(Icons.work_outline, size: 12, color: scheme.primary),
+                      const SizedBox(width: 3),
                       Text(
                         'Salary',
                         style: TextStyle(
                           fontSize: 10,
-                          color: Colors.indigo,
+                          color: scheme.primary,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -79,7 +84,7 @@ class TransactionCard extends StatelessWidget {
           ),
           subtitle: Text(
             _formatDate(transaction.date),
-            style: TextStyle(color: Colors.grey[600], fontSize: 12),
+            style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12),
           ),
           trailing: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -99,7 +104,7 @@ class TransactionCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: Colors.grey[200],
+                  color: scheme.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(

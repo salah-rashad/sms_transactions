@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../providers/transaction_provider.dart';
+import '../theme/app_colors.dart';
 import '../widgets/stats_card.dart';
 import '../widgets/monthly_summary_tile.dart';
 import '../widgets/salary_summary_tile.dart';
 import '../widgets/currency_text.dart';
+import '../widgets/theme_mode_button.dart';
 import 'salary_cycle_screen.dart';
 
 enum _SummaryView { overview, salary }
@@ -22,8 +24,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     return Scaffold(
-      appBar: AppBar(title: const Text('Dashboard')),
+      appBar: AppBar(
+        title: const Text('Dashboard'),
+        actions: const [ThemeModeButton()],
+      ),
       body: Consumer<TransactionProvider>(
         builder: (context, provider, _) {
           if (provider.isLoading) {
@@ -37,13 +43,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.error_outline,
-                        size: 48, color: Colors.red),
+                    Icon(Icons.error_outline,
+                        size: 48, color: Theme.of(context).colorScheme.error),
                     const SizedBox(height: 16),
                     Text(
                       provider.error!,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(color: Colors.red),
+                      style: TextStyle(
+                          color: Theme.of(context).colorScheme.error),
                     ),
                     const SizedBox(height: 16),
                     ElevatedButton(
@@ -67,8 +74,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       Expanded(
                         child: StatsCard(
                           title: 'Balance',
-                          value: CurrencyText(amount: provider.currentBalance, color: Colors.blue),
-                          color: Colors.blue,
+                          value: CurrencyText(amount: provider.currentBalance, color: colors.balance),
+                          color: colors.balance,
                           icon: Icons.account_balance_wallet,
                         ),
                       ),
@@ -82,8 +89,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       Expanded(
                         child: StatsCard(
                           title: 'Income',
-                          value: CurrencyText(amount: provider.totalIncome, color: Colors.green),
-                          color: Colors.green,
+                          value: CurrencyText(amount: provider.totalIncome, color: colors.income),
+                          color: colors.income,
                           icon: Icons.trending_up,
                         ),
                       ),
@@ -91,8 +98,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       Expanded(
                         child: StatsCard(
                           title: 'Expense',
-                          value: CurrencyText(amount: provider.totalExpense, color: Colors.red),
-                          color: Colors.red,
+                          value: CurrencyText(amount: provider.totalExpense, color: colors.expense),
+                          color: colors.expense,
                           icon: Icons.trending_down,
                         ),
                       ),
@@ -107,8 +114,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       Expanded(
                         child: StatsCard(
                           title: 'Savings (Pool)',
-                          value: CurrencyText(amount: provider.totalSavings, color: Colors.indigo),
-                          color: Colors.indigo,
+                          value: CurrencyText(amount: provider.totalSavings, color: Theme.of(context).colorScheme.primary),
+                          color: Theme.of(context).colorScheme.primary,
                           icon: Icons.savings,
                         ),
                       ),
@@ -116,9 +123,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: const Text(
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16),
+                  child: Text(
                     'Monthly Summary',
                     style: TextStyle(
                       fontSize: 18,
@@ -193,7 +200,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           builder: (_) => SalaryCycleScreen(
                             cycleStart: v.cycleStart,
                             cycleEnd: v.cycleEnd,
-                            // title: DateFormat.yMMMM().format(v.cycleStart),
                           ),
                         ),
                       ),

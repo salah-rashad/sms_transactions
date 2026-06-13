@@ -115,7 +115,7 @@ class _SalaryCycleScreenState extends State<SalaryCycleScreen> {
                                     _formatDateHeader(txn.date),
                                     style: TextStyle(
                                       fontWeight: FontWeight.w600,
-                                      color: Colors.grey[600],
+                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                                       fontSize: 13,
                                     ),
                                   ),

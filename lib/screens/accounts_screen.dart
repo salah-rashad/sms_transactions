@@ -2,14 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/transaction_provider.dart';
 import '../widgets/currency_text.dart';
+import '../widgets/theme_mode_button.dart';
 
 class AccountsScreen extends StatelessWidget {
   const AccountsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Accounts')),
+      appBar: AppBar(
+        title: const Text('Accounts'),
+        actions: const [ThemeModeButton()],
+      ),
       body: Consumer<TransactionProvider>(
         builder: (context, provider, _) {
           if (provider.isLoading) {
@@ -39,7 +45,7 @@ class AccountsScreen extends StatelessWidget {
                                   ? Icons.account_balance
                                   : Icons.phone_android,
                               size: 32,
-                              color: Theme.of(context).primaryColor,
+                              color: scheme.primary,
                             ),
                             const SizedBox(width: 12),
                             Expanded(
@@ -62,12 +68,12 @@ class AccountsScreen extends StatelessWidget {
                               children: [
                                 Text(
                                   'Estimated Balance',
-                                  style: TextStyle(color: Colors.grey[600]),
+                                  style: TextStyle(color: scheme.onSurfaceVariant),
                                 ),
                                 const SizedBox(height: 4),
                                 CurrencyText(
                                   amount: account.estimatedBalance,
-                                  color: Theme.of(context).primaryColor,
+                                  color: scheme.primary,
                                   style: const TextStyle(
                                     fontSize: 22,
                                     fontWeight: FontWeight.bold,
@@ -80,7 +86,7 @@ class AccountsScreen extends StatelessWidget {
                               children: [
                                 Text(
                                   'Transactions',
-                                  style: TextStyle(color: Colors.grey[600]),
+                                  style: TextStyle(color: scheme.onSurfaceVariant),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
@@ -99,7 +105,7 @@ class AccountsScreen extends StatelessWidget {
                           Container(
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: Colors.grey.shade100,
+                              color: scheme.surfaceContainerLow,
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Row(
@@ -107,7 +113,7 @@ class AccountsScreen extends StatelessWidget {
                                 Icon(
                                   Icons.info_outline,
                                   size: 18,
-                                  color: Colors.grey[600],
+                                  color: scheme.onSurfaceVariant,
                                 ),
                                 const SizedBox(width: 8),
                                 Expanded(
@@ -140,7 +146,7 @@ class _AnnouncedBalanceText extends StatelessWidget {
   Widget build(BuildContext context) {
     return CurrencyText(
       amount: announcedBalance,
-      color: Colors.grey,
+      color: Theme.of(context).colorScheme.onSurfaceVariant,
       style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal),
       prefix: 'Last announced: ',
     );

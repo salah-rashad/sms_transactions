@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../theme/app_colors.dart';
 import 'currency_text.dart';
 
 class SalarySummaryTile extends StatelessWidget {
@@ -35,7 +36,14 @@ class SalarySummaryTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
+    final scheme = Theme.of(context).colorScheme;
     final spentPercent = salary > 0 ? ((expense + savings) / salary).clamp(0.0, 1.0) : 0.0;
+    final progressColor = spentPercent > 0.9
+        ? colors.expense
+        : spentPercent > 0.7
+            ? colors.warning
+            : colors.income;
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -65,20 +73,20 @@ class SalarySummaryTile extends StatelessWidget {
                           _periodLabel,
                           style: TextStyle(
                             fontSize: 12,
-                            color: Colors.grey[500],
+                            color: scheme.onSurfaceVariant,
                           ),
                         ),
                       ],
                     ),
                   ),
                   if (onTap != null)
-                    Icon(Icons.chevron_right, color: Colors.grey[400]),
+                    Icon(Icons.chevron_right, color: scheme.outlineVariant),
                 ],
               ),
               const Divider(),
               CurrencyText(
                 amount: salary,
-                color: Colors.indigo,
+                color: scheme.primary,
                 style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
                 prefix: 'Salary: ',
               ),
@@ -90,12 +98,8 @@ class SalarySummaryTile extends StatelessWidget {
                       borderRadius: BorderRadius.circular(4),
                       child: LinearProgressIndicator(
                         value: spentPercent,
-                        backgroundColor: Colors.green.withValues(alpha: 0.15),
-                        color: spentPercent > 0.9
-                            ? Colors.red
-                            : spentPercent > 0.7
-                                ? Colors.orange
-                                : Colors.green,
+                        backgroundColor: colors.income.withValues(alpha: 0.15),
+                        color: progressColor,
                         minHeight: 8,
                       ),
                     ),
@@ -106,11 +110,7 @@ class SalarySummaryTile extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: spentPercent > 0.9
-                          ? Colors.red
-                          : spentPercent > 0.7
-                              ? Colors.orange
-                              : Colors.green,
+                      color: progressColor,
                     ),
                   ),
                 ],
@@ -119,10 +119,15 @@ class SalarySummaryTile extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  _buildColumn('Expense', expense, Colors.red),
-                  if (savings > 0) _buildColumn('Savings', savings, Colors.teal),
-                  _buildColumn('Left', remaining,
-                      remaining >= 0 ? Colors.green : Colors.red),
+                  _buildColumn(context, 'Expense', expense, colors.expense),
+                  if (savings > 0)
+                    _buildColumn(context, 'Savings', savings, colors.savings),
+                  _buildColumn(
+                    context,
+                    'Left',
+                    remaining,
+                    remaining >= 0 ? colors.income : colors.expense,
+                  ),
                 ],
               ),
             ],
@@ -132,11 +137,17 @@ class SalarySummaryTile extends StatelessWidget {
     );
   }
 
-  Widget _buildColumn(String label, double value, Color color) {
+  Widget _buildColumn(BuildContext context, String label, double value, Color color) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+        Text(
+          label,
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+            fontSize: 12,
+          ),
+        ),
         const SizedBox(height: 4),
         CurrencyText(
           amount: value,
