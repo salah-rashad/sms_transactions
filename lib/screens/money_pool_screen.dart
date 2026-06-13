@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:sms_transactions/utils/extensions/BuildContext.ext.dart';
 import '../providers/transaction_provider.dart';
 import '../models/money_pool.dart';
-import '../theme/app_colors.dart';
 import '../widgets/currency_text.dart';
 import '../widgets/theme_mode_button.dart';
 
@@ -84,7 +84,7 @@ class _MoneyPoolScreenState extends State<MoneyPoolScreen> {
   }
 
   Widget _buildLockedBanner(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
+    final scheme = context.colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
       decoration: BoxDecoration(
@@ -149,7 +149,7 @@ class _MoneyPoolScreenState extends State<MoneyPoolScreen> {
 
   Widget _buildOverviewCard(BuildContext context, MoneyPool pool) {
     final colors = context.appColors;
-    final scheme = Theme.of(context).colorScheme;
+    final scheme = context.colorScheme;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -222,7 +222,7 @@ class _MoneyPoolScreenState extends State<MoneyPoolScreen> {
         Text(
           label,
           style: TextStyle(
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
+            color: context.colorScheme.onSurfaceVariant,
             fontSize: 12,
           ),
         ),
@@ -241,7 +241,7 @@ class _MoneyPoolScreenState extends State<MoneyPoolScreen> {
 
   Widget _buildNextPayoutCard(BuildContext context, MoneyPool pool) {
     final colors = context.appColors;
-    final scheme = Theme.of(context).colorScheme;
+    final scheme = context.colorScheme;
     final next = pool.nextPayout;
     if (next == null) {
       return Card(
@@ -315,7 +315,7 @@ class _MoneyPoolScreenState extends State<MoneyPoolScreen> {
   Widget _buildContributionsSection(
       BuildContext context, TransactionProvider provider, MoneyPool pool) {
     final colors = context.appColors;
-    final scheme = Theme.of(context).colorScheme;
+    final scheme = context.colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -390,7 +390,7 @@ class _MoneyPoolScreenState extends State<MoneyPoolScreen> {
   Widget _buildPayoutScheduleSection(
       BuildContext context, TransactionProvider provider, MoneyPool pool) {
     final colors = context.appColors;
-    final scheme = Theme.of(context).colorScheme;
+    final scheme = context.colorScheme;
     final sortedPayouts = pool.payouts
         .asMap()
         .entries
@@ -597,7 +597,7 @@ class _YearMonthPickerState extends State<YearMonthPicker> {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
+    final scheme = context.colorScheme;
     return Column(
       children: [
         Row(

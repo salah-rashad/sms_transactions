@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:sms_transactions/utils/extensions/BuildContext.ext.dart';
 import '../providers/transaction_provider.dart';
-import '../theme/app_colors.dart';
 import '../widgets/stats_card.dart';
 import '../widgets/monthly_summary_tile.dart';
 import '../widgets/salary_summary_tile.dart';
@@ -42,13 +42,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(Icons.error_outline,
-                        size: 48, color: Theme.of(context).colorScheme.error),
+                        size: 48, color: context.colorScheme.error),
                     const SizedBox(height: 16),
                     Text(
                       provider.error!,
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                          color: Theme.of(context).colorScheme.error),
+                          color: context.colorScheme.error),
                     ),
                     const SizedBox(height: 16),
                     ElevatedButton(
@@ -112,8 +112,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       Expanded(
                         child: StatsCard(
                           title: 'Savings (Pool)',
-                          value: CurrencyText(amount: provider.totalSavings, color: Theme.of(context).colorScheme.primary),
-                          color: Theme.of(context).colorScheme.primary,
+                          value: CurrencyText(amount: provider.totalSavings, color: context.colorScheme.primary),
+                          color: context.colorScheme.primary,
                           icon: Icons.savings,
                         ),
                       ),

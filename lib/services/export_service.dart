@@ -1,12 +1,18 @@
 import 'dart:io';
+
 import 'package:excel/excel.dart';
+import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
+
 import '../models/transaction.dart';
 
 class ExportService {
-  static Future<void> exportTransactions(List<Transaction> transactions) async {
+  static Future<ShareResult> exportTransactions(
+    BuildContext context,
+    List<Transaction> transactions,
+  ) async {
     final excel = Excel.createExcel();
     final sheet = excel['Transactions'];
     excel.delete('Sheet1');
@@ -31,7 +37,9 @@ class ExportService {
     );
 
     for (int i = 0; i < headers.length; i++) {
-      final cell = sheet.cell(CellIndex.indexByColumnRow(columnIndex: i, rowIndex: 0));
+      final cell = sheet.cell(
+        CellIndex.indexByColumnRow(columnIndex: i, rowIndex: 0),
+      );
       cell.value = TextCellValue(headers[i]);
       cell.cellStyle = headerStyle;
     }
@@ -44,14 +52,20 @@ class ExportService {
     sheet.setColumnWidth(4, 16); // Amount
     sheet.setColumnWidth(5, 16); // Balance
     sheet.setColumnWidth(6, 28); // Counterparty
-    sheet.setColumnWidth(7, 8);  // Salary
+    sheet.setColumnWidth(7, 8); // Salary
 
     final dateFmt = DateFormat('dd/MM/yyyy');
     final timeFmt = DateFormat('HH:mm');
 
-    final incomeStyle = CellStyle(fontColorHex: ExcelColor.fromHexString('#1D6B2E'));
-    final expenseStyle = CellStyle(fontColorHex: ExcelColor.fromHexString('#C00000'));
-    final balanceCheckStyle = CellStyle(fontColorHex: ExcelColor.fromHexString('#2F5496'));
+    final incomeStyle = CellStyle(
+      fontColorHex: ExcelColor.fromHexString('#1D6B2E'),
+    );
+    final expenseStyle = CellStyle(
+      fontColorHex: ExcelColor.fromHexString('#C00000'),
+    );
+    final balanceCheckStyle = CellStyle(
+      fontColorHex: ExcelColor.fromHexString('#2F5496'),
+    );
 
     for (int i = 0; i < transactions.length; i++) {
       final t = transactions[i];
@@ -83,7 +97,9 @@ class ExportService {
       ];
 
       for (int j = 0; j < rowData.length; j++) {
-        final cell = sheet.cell(CellIndex.indexByColumnRow(columnIndex: j, rowIndex: row));
+        final cell = sheet.cell(
+          CellIndex.indexByColumnRow(columnIndex: j, rowIndex: row),
+        );
         final v = rowData[j];
         if (v is double) {
           cell.value = DoubleCellValue(v);
@@ -107,9 +123,17 @@ class ExportService {
     final file = File('${dir.path}/transactions_$timestamp.xlsx');
     await file.writeAsBytes(bytes);
 
-    await Share.shareXFiles(
-      [XFile(file.path, mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')],
-      subject: 'Transactions Export – $timestamp',
+    return SharePlus.instance.share(
+      ShareParams(
+        files: [
+          XFile(
+            file.path,
+            mimeType:
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          ),
+        ],
+        subject: 'Transactions Export – $timestamp',
+      ),
     );
   }
 
@@ -121,13 +145,17 @@ class ExportService {
     );
 
     void writeHeader(int col, int row, String text) {
-      final cell = sheet.cell(CellIndex.indexByColumnRow(columnIndex: col, rowIndex: row));
+      final cell = sheet.cell(
+        CellIndex.indexByColumnRow(columnIndex: col, rowIndex: row),
+      );
       cell.value = TextCellValue(text);
       cell.cellStyle = headerStyle;
     }
 
     void writeValue(int col, int row, dynamic value) {
-      final cell = sheet.cell(CellIndex.indexByColumnRow(columnIndex: col, rowIndex: row));
+      final cell = sheet.cell(
+        CellIndex.indexByColumnRow(columnIndex: col, rowIndex: row),
+      );
       if (value is double) {
         cell.value = DoubleCellValue(value);
       } else {
@@ -135,7 +163,9 @@ class ExportService {
       }
     }
 
-    final nonBalance = transactions.where((t) => t.type != TransactionType.balanceCheck).toList();
+    final nonBalance = transactions
+        .where((t) => t.type != TransactionType.balanceCheck)
+        .toList();
     final totalIncome = nonBalance
         .where((t) => t.type == TransactionType.income)
         .fold(0.0, (s, t) => s + t.amount);

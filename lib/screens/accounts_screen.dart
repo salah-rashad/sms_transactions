@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sms_transactions/utils/extensions/BuildContext.ext.dart';
 import '../providers/transaction_provider.dart';
 import '../widgets/currency_text.dart';
 
@@ -8,7 +9,7 @@ class AccountsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
+    final scheme = context.colorScheme;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Accounts')),
@@ -142,7 +143,7 @@ class _AnnouncedBalanceText extends StatelessWidget {
   Widget build(BuildContext context) {
     return CurrencyText(
       amount: announcedBalance,
-      color: Theme.of(context).colorScheme.onSurfaceVariant,
+      color: context.colorScheme.onSurfaceVariant,
       style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal),
       prefix: 'Last announced: ',
     );

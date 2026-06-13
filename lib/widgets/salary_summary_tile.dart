@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../theme/app_colors.dart';
+import 'package:sms_transactions/utils/extensions/BuildContext.ext.dart';
 import 'currency_text.dart';
 
 class SalarySummaryTile extends StatelessWidget {
@@ -37,7 +37,7 @@ class SalarySummaryTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.appColors;
-    final scheme = Theme.of(context).colorScheme;
+    final scheme = context.colorScheme;
     final spentPercent = salary > 0 ? ((expense + savings) / salary).clamp(0.0, 1.0) : 0.0;
     final progressColor = spentPercent > 0.9
         ? colors.expense
@@ -144,7 +144,7 @@ class SalarySummaryTile extends StatelessWidget {
         Text(
           label,
           style: TextStyle(
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
+            color: context.colorScheme.onSurfaceVariant,
             fontSize: 12,
           ),
         ),

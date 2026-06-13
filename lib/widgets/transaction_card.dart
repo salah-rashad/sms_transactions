@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:sms_transactions/utils/extensions/BuildContext.ext.dart';
 import '../models/transaction.dart';
-import '../theme/app_colors.dart';
 import '../widgets/currency_text.dart';
 
 class TransactionCard extends StatelessWidget {
@@ -18,7 +18,7 @@ class TransactionCard extends StatelessWidget {
     final isIncome = transaction.type == TransactionType.income;
     final isBalanceCheck = transaction.type == TransactionType.balanceCheck;
     final colors = context.appColors;
-    final scheme = Theme.of(context).colorScheme;
+    final scheme = context.colorScheme;
 
     Color iconColor;
     IconData iconData;

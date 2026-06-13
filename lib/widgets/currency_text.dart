@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sms_transactions/utils/extensions/BuildContext.ext.dart';
 
 class CurrencyText extends StatelessWidget {
   final double amount;
@@ -22,7 +23,7 @@ class CurrencyText extends StatelessWidget {
   Widget build(BuildContext context) {
     final effectiveStyle =
         style ??
-        Theme.of(context).textTheme.titleLarge?.copyWith(
+        context.textTheme.titleLarge?.copyWith(
           color: color,
           fontWeight: FontWeight.bold,
         );

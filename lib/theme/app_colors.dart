@@ -8,6 +8,8 @@ class AppColors extends ThemeExtension<AppColors> {
   final Color savings;
   final Color contribution;
   final Color warning;
+  final Color success;
+  final Color successContainer;
 
   const AppColors({
     required this.income,
@@ -16,6 +18,8 @@ class AppColors extends ThemeExtension<AppColors> {
     required this.savings,
     required this.contribution,
     required this.warning,
+    required this.success,
+    required this.successContainer,
   });
 
   static const light = AppColors(
@@ -25,6 +29,8 @@ class AppColors extends ThemeExtension<AppColors> {
     savings: Color(0xFF00695C),
     contribution: Color(0xFFE65100),
     warning: Color(0xFFEF6C00),
+    success: Color(0xFF2E7D32),
+    successContainer: Color(0xFFC8E6C9),
   );
 
   static const dark = AppColors(
@@ -34,6 +40,8 @@ class AppColors extends ThemeExtension<AppColors> {
     savings: Color(0xFF4DB6AC),
     contribution: Color(0xFFFFA726),
     warning: Color(0xFFFFA726),
+    success: Color(0xFF81C784),
+    successContainer: Color(0xFF1B5E20),
   );
 
   @override
@@ -44,6 +52,8 @@ class AppColors extends ThemeExtension<AppColors> {
     Color? savings,
     Color? contribution,
     Color? warning,
+    Color? success,
+    Color? successContainer,
   }) {
     return AppColors(
       income: income ?? this.income,
@@ -52,6 +62,8 @@ class AppColors extends ThemeExtension<AppColors> {
       savings: savings ?? this.savings,
       contribution: contribution ?? this.contribution,
       warning: warning ?? this.warning,
+      success: success ?? this.success,
+      successContainer: successContainer ?? this.successContainer,
     );
   }
 
@@ -65,10 +77,12 @@ class AppColors extends ThemeExtension<AppColors> {
       savings: Color.lerp(savings, other.savings, t)!,
       contribution: Color.lerp(contribution, other.contribution, t)!,
       warning: Color.lerp(warning, other.warning, t)!,
+      success: Color.lerp(success, other.success, t)!,
+      successContainer: Color.lerp(
+        successContainer,
+        other.successContainer,
+        t,
+      )!,
     );
   }
-}
-
-extension AppColorsX on BuildContext {
-  AppColors get appColors => Theme.of(this).extension<AppColors>()!;
 }

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../theme/app_colors.dart';
+import 'package:sms_transactions/utils/extensions/BuildContext.ext.dart';
 import 'currency_text.dart';
 
 class MonthlySummaryTile extends StatelessWidget {
@@ -21,7 +21,7 @@ class MonthlySummaryTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.appColors;
-    final scheme = Theme.of(context).colorScheme;
+    final scheme = context.colorScheme;
     final netPositive = income - expense >= 0;
 
     return Card(
@@ -88,7 +88,7 @@ class MonthlySummaryTile extends StatelessWidget {
         Text(
           label,
           style: TextStyle(
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
+            color: context.colorScheme.onSurfaceVariant,
             fontSize: 12,
           ),
         ),

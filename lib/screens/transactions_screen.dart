@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:sms_transactions/utils/extensions/BuildContext.ext.dart';
 import '../models/transaction.dart';
 import '../providers/transaction_provider.dart';
 import '../widgets/transaction_card.dart';
@@ -212,7 +213,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                                       style: TextStyle(
                                         fontSize: 18,
                                         fontWeight: FontWeight.bold,
-                                        color: Theme.of(context)
+                                        color: context
                                             .colorScheme
                                             .primary,
                                       ),
@@ -226,7 +227,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                                       _formatDateHeader(txn.date),
                                     style: TextStyle(
                                       fontWeight: FontWeight.w600,
-                                      color: Theme.of(context)
+                                      color: context
                                             .colorScheme
                                             .onSurfaceVariant,
                                       fontSize: 13,
@@ -385,7 +386,7 @@ class _FilterSheetState extends State<_FilterSheet> {
             height: 4,
             margin: const EdgeInsets.only(top: 10, bottom: 8),
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+              color: context.colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -395,7 +396,7 @@ class _FilterSheetState extends State<_FilterSheet> {
               children: [
                 Text(
                   'Filters',
-                  style: Theme.of(context).textTheme.titleLarge,
+                  style: context.textTheme.titleLarge,
                 ),
                 const Spacer(),
                 TextButton.icon(
@@ -414,7 +415,7 @@ class _FilterSheetState extends State<_FilterSheet> {
                 'Type',
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  color: context.colorScheme.onSurfaceVariant,
                   fontSize: 13,
                 ),
               ),
@@ -494,7 +495,7 @@ class _FilterSheetState extends State<_FilterSheet> {
         text,
         style: TextStyle(
           fontWeight: FontWeight.w600,
-          color: Theme.of(context).colorScheme.onSurfaceVariant,
+          color: context.colorScheme.onSurfaceVariant,
           fontSize: 13,
         ),
       ),

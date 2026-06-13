@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sms_transactions/utils/extensions/BuildContext.ext.dart';
 
 class StatsCard extends StatelessWidget {
   final String title;
@@ -29,15 +30,15 @@ class StatsCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 Text(
                   title,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  style: context.textTheme.bodySmall?.copyWith(
+                        color: context.colorScheme.onSurfaceVariant,
                       ),
                 ),
               ],
             ),
             const SizedBox(height: 8),
             DefaultTextStyle(
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              style: context.textTheme.titleLarge?.copyWith(
                     color: color,
                     fontWeight: FontWeight.bold,
                   ) ??
