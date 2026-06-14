@@ -1,23 +1,23 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:sms_transactions/features/settings/providers/theme_provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:sms_transactions/features/settings/cubit/theme_cubit.dart';
 
 class ThemeModeButton extends StatelessWidget {
   const ThemeModeButton({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ThemeProvider>(
-      builder: (context, provider, _) {
+    return BlocBuilder<ThemeCubit, ThemeMode>(
+      builder: (context, themeMode) {
         return PopupMenuButton<ThemeMode>(
           icon: const Icon(Icons.brightness_6_outlined),
           tooltip: 'Theme',
-          onSelected: provider.setThemeMode,
+          onSelected: context.read<ThemeCubit>().setThemeMode,
           itemBuilder: (_) => [
             for (final mode in ThemeMode.values)
               CheckedPopupMenuItem(
                 value: mode,
-                checked: provider.themeMode == mode,
+                checked: themeMode == mode,
                 child: Text(_label(mode)),
               ),
           ],

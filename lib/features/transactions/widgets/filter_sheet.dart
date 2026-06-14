@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
-import 'package:provider/provider.dart';
 import 'package:sms_transactions/core/extensions/build_context.dart';
 import 'package:sms_transactions/domain/models/transaction.dart';
-import 'package:sms_transactions/features/transactions/providers/transaction_provider.dart';
+import 'package:sms_transactions/features/transactions/cubit/transaction_cubit.dart';
 
 typedef AccountOption = ({AccountSource source, String label});
 
@@ -14,11 +14,7 @@ class DateFilter {
   final DateTime start;
   final DateTime? end;
 
-  const DateFilter({
-    required this.label,
-    required this.start,
-    this.end,
-  });
+  const DateFilter({required this.label, required this.start, this.end});
 
   bool matches(DateTime date) {
     if (date.isBefore(start)) return false;
@@ -41,14 +37,18 @@ class FilterSheetResult {
   final Set<AccountSource> accountFilters;
 
   const FilterSheetResult(
-      this.typeFilter, this.dateFilters, this.accountFilters);
+    this.typeFilter,
+    this.dateFilters,
+    this.accountFilters,
+  );
 }
 
 String formatPeriod(DateTime start, DateTime? end) {
   final fmt = DateFormat('d MMM yyyy');
   final s = fmt.format(start);
-  final e =
-      end != null ? fmt.format(end.subtract(const Duration(days: 1))) : 'Present';
+  final e = end != null
+      ? fmt.format(end.subtract(const Duration(days: 1)))
+      : 'Present';
   return '$s – $e';
 }
 
@@ -100,10 +100,10 @@ class _FilterSheetState extends State<FilterSheet> {
   }
 
   void _reset() => setState(() {
-        _type = Filter.all;
-        _dates = const [];
-        _accounts = {};
-      });
+    _type = Filter.all;
+    _dates = const [];
+    _accounts = {};
+  });
 
   void _toggleAccount(AccountSource source) {
     setState(() {
@@ -116,7 +116,7 @@ class _FilterSheetState extends State<FilterSheet> {
   }
 
   int get _resultCount {
-    final txns = context.read<TransactionProvider>().transactions;
+    final txns = context.read<TransactionCubit>().state.transactions;
     final dateRestricted = _dates.isNotEmpty;
     final accountRestricted = _accounts.isNotEmpty;
     var n = 0;
@@ -144,7 +144,9 @@ class _FilterSheetState extends State<FilterSheet> {
             height: 4,
             margin: const EdgeInsets.only(top: 10, bottom: 8),
             decoration: BoxDecoration(
-              color: context.colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+              color: context.colorScheme.onSurfaceVariant.withValues(
+                alpha: 0.4,
+              ),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -152,10 +154,7 @@ class _FilterSheetState extends State<FilterSheet> {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               children: [
-                Text(
-                  'Filters',
-                  style: context.textTheme.titleLarge,
-                ),
+                Text('Filters', style: context.textTheme.titleLarge),
                 const Spacer(),
                 TextButton.icon(
                   onPressed: _reset,

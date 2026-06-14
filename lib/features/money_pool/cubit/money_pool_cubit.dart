@@ -1,16 +1,19 @@
-import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sms_transactions/data/database/app_database.dart';
 import 'package:sms_transactions/data/repositories/money_pool_repository.dart';
 import 'package:sms_transactions/domain/models/money_pool.dart';
+import 'package:sms_transactions/features/money_pool/cubit/money_pool_state.dart';
 
-class MoneyPoolProvider extends ChangeNotifier {
+class MoneyPoolCubit extends Cubit<MoneyPoolState> {
   final MoneyPoolRepository _repo;
-  final MoneyPool _moneyPool = MoneyPool();
 
-  MoneyPoolProvider(this._repo);
+  MoneyPoolCubit(this._repo)
+      : super(MoneyPoolState(moneyPool: MoneyPool()));
 
-  MoneyPool get moneyPool => _moneyPool;
+  MoneyPool get _moneyPool => state.moneyPool;
+
   List<PoolContribution> get contributions => _moneyPool.contributions;
+
   double get totalContributed => _moneyPool.totalContributed;
 
   Future<void> load() async {
@@ -30,13 +33,12 @@ class MoneyPoolProvider extends ChangeNotifier {
 
     final payoutStateRows = await _repo.getPayoutStates();
     for (final row in payoutStateRows) {
-      if (row.payoutIndex >= 0 &&
-          row.payoutIndex < _moneyPool.payouts.length) {
+      if (row.payoutIndex >= 0 && row.payoutIndex < _moneyPool.payouts.length) {
         _moneyPool.payouts[row.payoutIndex].isReceived = row.isReceived;
       }
     }
 
-    notifyListeners();
+    emit(state.copyWith());
   }
 
   void addContribution(double amount, DateTime date) {
@@ -51,13 +53,13 @@ class MoneyPoolProvider extends ChangeNotifier {
         amount: amount,
       ),
     );
-    notifyListeners();
+    emit(state.copyWith());
   }
 
   void removeContribution(String id) {
     _moneyPool.contributions.removeWhere((c) => c.id == id);
     _repo.deleteContribution(id);
-    notifyListeners();
+    emit(state.copyWith());
   }
 
   void togglePayoutReceived(int payoutIndex) {
@@ -68,7 +70,7 @@ class MoneyPoolProvider extends ChangeNotifier {
         payoutIndex,
         _moneyPool.payouts[payoutIndex].isReceived,
       );
-      notifyListeners();
+      emit(state.copyWith());
     }
   }
 }

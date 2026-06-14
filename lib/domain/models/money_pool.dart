@@ -26,16 +26,16 @@ class MoneyPool {
   final List<PoolContribution> contributions;
   final List<PoolPayout> payouts;
 
-  MoneyPool({
-    List<PoolContribution>? contributions,
-    List<PoolPayout>? payouts,
-  })  : contributions = contributions ?? [],
-        payouts = payouts ?? [
-          PoolPayout(date: DateTime(2026, 9, 1), amount: 100000),
-          PoolPayout(date: DateTime(2027, 4, 1), amount: 100000),
-          PoolPayout(date: DateTime(2028, 5, 1), amount: 100000),
-          PoolPayout(date: DateTime(2028, 12, 1), amount: 100000),
-        ];
+  MoneyPool({List<PoolContribution>? contributions, List<PoolPayout>? payouts})
+    : contributions = contributions ?? [],
+      payouts =
+          payouts ??
+          [
+            PoolPayout(date: DateTime(2026, 9, 1), amount: 100000),
+            PoolPayout(date: DateTime(2027, 4, 1), amount: 100000),
+            PoolPayout(date: DateTime(2028, 5, 1), amount: 100000),
+            PoolPayout(date: DateTime(2028, 12, 1), amount: 100000),
+          ];
 
   double get totalContributed =>
       contributions.fold(0.0, (sum, c) => sum + c.amount);

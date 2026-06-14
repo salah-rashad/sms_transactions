@@ -20,8 +20,18 @@ class _YearMonthPickerState extends State<YearMonthPicker> {
   late int _selectedMonth;
 
   static const _months = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
   ];
 
   @override
@@ -77,7 +87,9 @@ class _YearMonthPickerState extends State<YearMonthPicker> {
                     color: isSelected ? scheme.primary : null,
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                      color: isSelected ? scheme.primary : scheme.outlineVariant,
+                      color: isSelected
+                          ? scheme.primary
+                          : scheme.outlineVariant,
                     ),
                   ),
                   child: Center(

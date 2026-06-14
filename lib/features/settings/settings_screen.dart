@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:sms_transactions/core/extensions/build_context.dart';
 import 'package:sms_transactions/data/services/export_service.dart';
 import 'package:sms_transactions/domain/models/transaction.dart';
-import 'package:sms_transactions/features/settings/providers/theme_provider.dart';
-import 'package:sms_transactions/features/transactions/providers/transaction_provider.dart';
+import 'package:sms_transactions/features/settings/cubit/theme_cubit.dart';
+import 'package:sms_transactions/features/transactions/cubit/transaction_cubit.dart';
+import 'package:sms_transactions/features/transactions/cubit/transaction_state.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -71,8 +72,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
       body: ListView(
         children: [
           _sectionHeader(context, 'Appearance'),
-          Consumer<ThemeProvider>(
-            builder: (context, provider, _) {
+          BlocBuilder<ThemeCubit, ThemeMode>(
+            builder: (context, themeMode) {
               return Card(
                 margin: const EdgeInsets.symmetric(horizontal: 12),
                 child: Column(
@@ -81,13 +82,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ListTile(
                         leading: Icon(_icon(mode)),
                         title: Text(_label(mode)),
-                        trailing: provider.themeMode == mode
+                        trailing: themeMode == mode
                             ? Icon(
                                 Icons.check,
                                 color: context.colorScheme.primary,
                               )
                             : null,
-                        onTap: () => provider.setThemeMode(mode),
+                        onTap: () =>
+                            context.read<ThemeCubit>().setThemeMode(mode),
                       ),
                   ],
                 ),
@@ -95,9 +97,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             },
           ),
           _sectionHeader(context, 'Data'),
-          Consumer<TransactionProvider>(
-            builder: (context, provider, _) {
-              final exportable = provider.transactions
+          BlocBuilder<TransactionCubit, TransactionState>(
+            builder: (context, state) {
+              final exportable = state.transactions
                   .where((t) => t.type != TransactionType.balanceCheck)
                   .toList();
               final hasData = exportable.isNotEmpty;

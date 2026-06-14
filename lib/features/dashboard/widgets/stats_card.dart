@@ -31,14 +31,15 @@ class StatsCard extends StatelessWidget {
                 Text(
                   title,
                   style: context.textTheme.bodySmall?.copyWith(
-                        color: context.colorScheme.onSurfaceVariant,
-                      ),
+                    color: context.colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ],
             ),
             const SizedBox(height: 8),
             DefaultTextStyle(
-              style: context.textTheme.titleLarge?.copyWith(
+              style:
+                  context.textTheme.titleLarge?.copyWith(
                     color: color,
                     fontWeight: FontWeight.bold,
                   ) ??

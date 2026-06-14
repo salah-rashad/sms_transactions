@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
-import 'package:provider/provider.dart';
 import 'package:sms_transactions/core/extensions/build_context.dart';
 import 'package:sms_transactions/domain/models/money_pool.dart';
-import 'package:sms_transactions/features/money_pool/providers/money_pool_provider.dart';
+import 'package:sms_transactions/features/money_pool/cubit/money_pool_cubit.dart';
+import 'package:sms_transactions/features/money_pool/cubit/money_pool_state.dart';
 import 'package:sms_transactions/features/money_pool/widgets/add_contribution_dialog.dart';
 import 'package:sms_transactions/shared/widgets/currency_text.dart';
 import 'package:sms_transactions/shared/widgets/theme_mode_button.dart';
@@ -45,9 +46,9 @@ class _MoneyPoolScreenState extends State<MoneyPoolScreen> {
           ),
         ],
       ),
-      body: Consumer<MoneyPoolProvider>(
-        builder: (context, provider, _) {
-          final pool = provider.moneyPool;
+      body: BlocBuilder<MoneyPoolCubit, MoneyPoolState>(
+        builder: (context, state) {
+          final pool = state.moneyPool;
 
           return Stack(
             children: [
@@ -58,9 +59,9 @@ class _MoneyPoolScreenState extends State<MoneyPoolScreen> {
                   const SizedBox(height: 16),
                   _buildNextPayoutCard(context, pool),
                   const SizedBox(height: 16),
-                  _buildContributionsSection(context, provider, pool),
+                  _buildContributionsSection(context, pool),
                   const SizedBox(height: 16),
-                  _buildPayoutScheduleSection(context, provider, pool),
+                  _buildPayoutScheduleSection(context, pool),
                   const SizedBox(height: 80),
                 ],
               ),
@@ -95,29 +96,18 @@ class _MoneyPoolScreenState extends State<MoneyPoolScreen> {
             scheme.surfaceContainerHighest.withValues(alpha: 0.95),
           ],
         ),
-        border: Border(
-          top: BorderSide(
-            color: scheme.outlineVariant,
-          ),
-        ),
+        border: Border(top: BorderSide(color: scheme.outlineVariant)),
       ),
       child: SafeArea(
         top: false,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.lock_outline,
-              size: 14,
-              color: scheme.onSurfaceVariant,
-            ),
+            Icon(Icons.lock_outline, size: 14, color: scheme.onSurfaceVariant),
             const SizedBox(width: 6),
             Text(
               'Screen is locked',
-              style: TextStyle(
-                fontSize: 12,
-                color: scheme.onSurfaceVariant,
-              ),
+              style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant),
             ),
             const SizedBox(width: 4),
             Text(
@@ -129,18 +119,11 @@ class _MoneyPoolScreenState extends State<MoneyPoolScreen> {
               ),
             ),
             const SizedBox(width: 4),
-            Icon(
-              Icons.lock_outline,
-              size: 12,
-              color: scheme.onSurfaceVariant,
-            ),
+            Icon(Icons.lock_outline, size: 12, color: scheme.onSurfaceVariant),
             const SizedBox(width: 4),
             Text(
               'in toolbar to unlock',
-              style: TextStyle(
-                fontSize: 12,
-                color: scheme.onSurfaceVariant,
-              ),
+              style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant),
             ),
           ],
         ),
@@ -175,7 +158,11 @@ class _MoneyPoolScreenState extends State<MoneyPoolScreen> {
                   child: _buildStatItem(
                     context,
                     'Contributed',
-                    CurrencyText(amount: pool.totalContributed, color: colors.contribution, decimals: 0),
+                    CurrencyText(
+                      amount: pool.totalContributed,
+                      color: colors.contribution,
+                      decimals: 0,
+                    ),
                     colors.contribution,
                   ),
                 ),
@@ -183,7 +170,11 @@ class _MoneyPoolScreenState extends State<MoneyPoolScreen> {
                   child: _buildStatItem(
                     context,
                     'Expected Return',
-                    CurrencyText(amount: pool.totalExpectedPayout, color: colors.income, decimals: 0),
+                    CurrencyText(
+                      amount: pool.totalExpectedPayout,
+                      color: colors.income,
+                      decimals: 0,
+                    ),
                     colors.income,
                   ),
                 ),
@@ -196,7 +187,11 @@ class _MoneyPoolScreenState extends State<MoneyPoolScreen> {
                   child: _buildStatItem(
                     context,
                     'Received',
-                    CurrencyText(amount: pool.totalReceived, color: colors.balance, decimals: 0),
+                    CurrencyText(
+                      amount: pool.totalReceived,
+                      color: colors.balance,
+                      decimals: 0,
+                    ),
                     colors.balance,
                   ),
                 ),
@@ -204,7 +199,13 @@ class _MoneyPoolScreenState extends State<MoneyPoolScreen> {
                   child: _buildStatItem(
                     context,
                     'Net Position',
-                    CurrencyText(amount: pool.netPosition, color: pool.netPosition >= 0 ? colors.income : colors.expense, decimals: 0),
+                    CurrencyText(
+                      amount: pool.netPosition,
+                      color: pool.netPosition >= 0
+                          ? colors.income
+                          : colors.expense,
+                      decimals: 0,
+                    ),
                     pool.netPosition >= 0 ? colors.income : colors.expense,
                   ),
                 ),
@@ -216,7 +217,12 @@ class _MoneyPoolScreenState extends State<MoneyPoolScreen> {
     );
   }
 
-  Widget _buildStatItem(BuildContext context, String label, Widget value, Color color) {
+  Widget _buildStatItem(
+    BuildContext context,
+    String label,
+    Widget value,
+    Color color,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -275,12 +281,18 @@ class _MoneyPoolScreenState extends State<MoneyPoolScreen> {
                 children: [
                   Text(
                     'Next Payout',
-                    style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: scheme.onSurfaceVariant,
+                    ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     DateFormat.yMMMMd().format(next.date),
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
                   ),
                 ],
               ),
@@ -303,7 +315,10 @@ class _MoneyPoolScreenState extends State<MoneyPoolScreen> {
                   monthsLeft == 0
                       ? 'This month!'
                       : '$monthsLeft month${monthsLeft > 1 ? 's' : ''} left',
-                  style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12),
+                  style: TextStyle(
+                    color: scheme.onSurfaceVariant,
+                    fontSize: 12,
+                  ),
                 ),
               ],
             ),
@@ -313,8 +328,7 @@ class _MoneyPoolScreenState extends State<MoneyPoolScreen> {
     );
   }
 
-  Widget _buildContributionsSection(
-      BuildContext context, MoneyPoolProvider provider, MoneyPool pool) {
+  Widget _buildContributionsSection(BuildContext context, MoneyPool pool) {
     final colors = context.appColors;
     final scheme = context.colorScheme;
     return Column(
@@ -356,7 +370,11 @@ class _MoneyPoolScreenState extends State<MoneyPoolScreen> {
               child: ListTile(
                 leading: CircleAvatar(
                   backgroundColor: colors.contribution.withValues(alpha: 0.15),
-                  child: Icon(Icons.savings, color: colors.contribution, size: 20),
+                  child: Icon(
+                    Icons.savings,
+                    color: colors.contribution,
+                    size: 20,
+                  ),
                 ),
                 title: Text(DateFormat.yMMMM().format(c.date)),
                 trailing: CurrencyText(
@@ -380,7 +398,7 @@ class _MoneyPoolScreenState extends State<MoneyPoolScreen> {
                 child: Icon(Icons.delete, color: scheme.onError),
               ),
               onDismissed: (_) =>
-                  provider.removeContribution(c.id),
+                  context.read<MoneyPoolCubit>().removeContribution(c.id),
               child: child,
             );
           }),
@@ -388,14 +406,10 @@ class _MoneyPoolScreenState extends State<MoneyPoolScreen> {
     );
   }
 
-  Widget _buildPayoutScheduleSection(
-      BuildContext context, MoneyPoolProvider provider, MoneyPool pool) {
+  Widget _buildPayoutScheduleSection(BuildContext context, MoneyPool pool) {
     final colors = context.appColors;
     final scheme = context.colorScheme;
-    final sortedPayouts = pool.payouts
-        .asMap()
-        .entries
-        .toList()
+    final sortedPayouts = pool.payouts.asMap().entries.toList()
       ..sort((a, b) => a.value.date.compareTo(b.value.date));
 
     return Column(
@@ -416,12 +430,14 @@ class _MoneyPoolScreenState extends State<MoneyPoolScreen> {
             color: payout.isReceived
                 ? colors.income.withValues(alpha: 0.08)
                 : isNext
-                    ? scheme.primary.withValues(alpha: 0.05)
-                    : null,
+                ? scheme.primary.withValues(alpha: 0.05)
+                : null,
             child: ListTile(
               leading: Icon(
                 payout.isReceived ? Icons.check_circle : Icons.schedule,
-                color: payout.isReceived ? colors.income : scheme.onSurfaceVariant,
+                color: payout.isReceived
+                    ? colors.income
+                    : scheme.onSurfaceVariant,
               ),
               title: Text(DateFormat.yMMMMd().format(payout.date)),
               trailing: Row(
@@ -442,19 +458,19 @@ class _MoneyPoolScreenState extends State<MoneyPoolScreen> {
                     child: IconButton(
                       padding: EdgeInsets.zero,
                       icon: Icon(
-                        payout.isReceived
-                            ? Icons.undo
-                            : Icons.check,
+                        payout.isReceived ? Icons.undo : Icons.check,
                         size: 20,
                       ),
                       color: _isLocked
                           ? scheme.outline
                           : payout.isReceived
-                              ? scheme.onSurfaceVariant
-                              : colors.income,
+                          ? scheme.onSurfaceVariant
+                          : colors.income,
                       onPressed: _isLocked
                           ? null
-                          : () => provider.togglePayoutReceived(index),
+                          : () => context
+                                .read<MoneyPoolCubit>()
+                                .togglePayoutReceived(index),
                     ),
                   ),
                 ],

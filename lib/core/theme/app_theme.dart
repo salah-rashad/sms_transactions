@@ -18,7 +18,9 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       colorScheme: colorScheme,
-      extensions: [brightness == Brightness.light ? AppColors.light : AppColors.dark],
+      extensions: [
+        brightness == Brightness.light ? AppColors.light : AppColors.dark,
+      ],
     );
   }
 }

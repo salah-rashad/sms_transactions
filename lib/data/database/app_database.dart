@@ -66,9 +66,9 @@ class AppDatabase extends _$AppDatabase {
         SalaryMarksCompanion(transactionId: Value(transactionId)),
       );
 
-  Future<void> deleteSalaryMark(String transactionId) =>
-      (delete(salaryMarks)..where((t) => t.transactionId.equals(transactionId)))
-          .go();
+  Future<void> deleteSalaryMark(String transactionId) => (delete(
+    salaryMarks,
+  )..where((t) => t.transactionId.equals(transactionId))).go();
 }
 
 LazyDatabase _openConnection() {

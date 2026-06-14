@@ -11,11 +11,9 @@ class MoneyPoolRepository {
   Future<void> insertContribution(PoolContributionsCompanion row) =>
       _db.insertContribution(row);
 
-  Future<void> deleteContribution(String id) =>
-      _db.deleteContribution(id);
+  Future<void> deleteContribution(String id) => _db.deleteContribution(id);
 
-  Future<List<PayoutStateRow>> getPayoutStates() =>
-      _db.getPayoutStates();
+  Future<List<PayoutStateRow>> getPayoutStates() => _db.getPayoutStates();
 
   Future<void> setPayoutReceived(int index, bool received) =>
       _db.setPayoutReceived(index, received);

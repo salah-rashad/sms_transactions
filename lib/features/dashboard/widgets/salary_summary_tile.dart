@@ -38,12 +38,14 @@ class SalarySummaryTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.appColors;
     final scheme = context.colorScheme;
-    final spentPercent = salary > 0 ? ((expense + savings) / salary).clamp(0.0, 1.0) : 0.0;
+    final spentPercent = salary > 0
+        ? ((expense + savings) / salary).clamp(0.0, 1.0)
+        : 0.0;
     final progressColor = spentPercent > 0.9
         ? colors.expense
         : spentPercent > 0.7
-            ? colors.warning
-            : colors.income;
+        ? colors.warning
+        : colors.income;
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -87,7 +89,10 @@ class SalarySummaryTile extends StatelessWidget {
               CurrencyText(
                 amount: salary,
                 color: scheme.primary,
-                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 15,
+                ),
                 prefix: 'Salary: ',
               ),
               const SizedBox(height: 10),
@@ -137,7 +142,12 @@ class SalarySummaryTile extends StatelessWidget {
     );
   }
 
-  Widget _buildColumn(BuildContext context, String label, double value, Color color) {
+  Widget _buildColumn(
+    BuildContext context,
+    String label,
+    double value,
+    Color color,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

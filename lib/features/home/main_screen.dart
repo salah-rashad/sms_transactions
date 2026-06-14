@@ -1,38 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:sms_transactions/features/accounts/accounts_screen.dart';
-import 'package:sms_transactions/features/dashboard/dashboard_screen.dart';
-import 'package:sms_transactions/features/money_pool/money_pool_screen.dart';
-import 'package:sms_transactions/features/settings/settings_screen.dart';
-import 'package:sms_transactions/features/transactions/transactions_screen.dart';
+import 'package:go_router/go_router.dart';
 
-class MainScreen extends StatefulWidget {
-  const MainScreen({super.key});
+class MainScreen extends StatelessWidget {
+  final StatefulNavigationShell navigationShell;
 
-  @override
-  State<MainScreen> createState() => _MainScreenState();
-}
-
-class _MainScreenState extends State<MainScreen> {
-  int _currentIndex = 0;
-
-  final List<Widget> _screens = const [
-    DashboardScreen(),
-    TransactionsScreen(),
-    AccountsScreen(),
-    MoneyPoolScreen(),
-    SettingsScreen(),
-  ];
+  const MainScreen({super.key, required this.navigationShell});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
-      ),
+      body: navigationShell,
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) => setState(() => _currentIndex = index),
+        currentIndex: navigationShell.currentIndex,
+        onTap: (index) => navigationShell.goBranch(
+          index,
+          initialLocation: index == navigationShell.currentIndex,
+        ),
         type: BottomNavigationBarType.fixed,
         items: const [
           BottomNavigationBarItem(
@@ -47,10 +30,7 @@ class _MainScreenState extends State<MainScreen> {
             icon: Icon(Icons.account_balance_wallet),
             label: 'Accounts',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.groups),
-            label: 'Pool',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.groups), label: 'Pool'),
           BottomNavigationBarItem(
             icon: Icon(Icons.settings),
             label: 'Settings',

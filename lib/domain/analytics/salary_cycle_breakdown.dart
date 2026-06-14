@@ -18,9 +18,7 @@ class SalaryCycleBreakdown {
     List<Transaction> transactions,
     List<PoolContribution> contributions,
   ) {
-    final salaryTxns = transactions
-        .where((t) => t.isMarkedAsSalary)
-        .toList()
+    final salaryTxns = transactions.where((t) => t.isMarkedAsSalary).toList()
       ..sort((a, b) => a.date.compareTo(b.date));
 
     if (salaryTxns.isEmpty) return {};
@@ -30,8 +28,9 @@ class SalaryCycleBreakdown {
     for (int i = 0; i < salaryTxns.length; i++) {
       final salaryTxn = salaryTxns[i];
       final cycleStart = salaryTxn.date;
-      final cycleEnd =
-          i + 1 < salaryTxns.length ? salaryTxns[i + 1].date : null;
+      final cycleEnd = i + 1 < salaryTxns.length
+          ? salaryTxns[i + 1].date
+          : null;
 
       final key =
           '${cycleStart.year}-${cycleStart.month.toString().padLeft(2, '0')}-${cycleStart.day.toString().padLeft(2, '0')}';
@@ -76,10 +75,9 @@ class SalaryCycleBreakdown {
   }
 
   static List<({DateTime start, DateTime? end})> cycleRanges(
-      List<Transaction> transactions) {
-    final salaryTxns = transactions
-        .where((t) => t.isMarkedAsSalary)
-        .toList()
+    List<Transaction> transactions,
+  ) {
+    final salaryTxns = transactions.where((t) => t.isMarkedAsSalary).toList()
       ..sort((a, b) => a.date.compareTo(b.date));
 
     return [

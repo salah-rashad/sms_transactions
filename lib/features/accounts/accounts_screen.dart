@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sms_transactions/core/extensions/build_context.dart';
-import 'package:sms_transactions/features/transactions/providers/transaction_provider.dart';
+import 'package:sms_transactions/features/transactions/cubit/transaction_cubit.dart';
+import 'package:sms_transactions/features/transactions/cubit/transaction_state.dart';
 import 'package:sms_transactions/shared/widgets/currency_text.dart';
 
 class AccountsScreen extends StatelessWidget {
@@ -13,16 +14,17 @@ class AccountsScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Accounts')),
-      body: Consumer<TransactionProvider>(
-        builder: (context, provider, _) {
-          if (provider.isLoading) {
+      body: BlocBuilder<TransactionCubit, TransactionState>(
+        builder: (context, state) {
+          if (state.isLoading) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          final accounts = provider.accounts;
+          final accounts = state.accounts;
 
           return RefreshIndicator(
-            onRefresh: provider.loadTransactions,
+            onRefresh: () =>
+                context.read<TransactionCubit>().loadTransactions(),
             child: ListView.builder(
               padding: const EdgeInsets.all(12),
               itemCount: accounts.length,
@@ -65,7 +67,9 @@ class AccountsScreen extends StatelessWidget {
                               children: [
                                 Text(
                                   'Estimated Balance',
-                                  style: TextStyle(color: scheme.onSurfaceVariant),
+                                  style: TextStyle(
+                                    color: scheme.onSurfaceVariant,
+                                  ),
                                 ),
                                 const SizedBox(height: 4),
                                 CurrencyText(
@@ -83,7 +87,9 @@ class AccountsScreen extends StatelessWidget {
                               children: [
                                 Text(
                                   'Transactions',
-                                  style: TextStyle(color: scheme.onSurfaceVariant),
+                                  style: TextStyle(
+                                    color: scheme.onSurfaceVariant,
+                                  ),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(

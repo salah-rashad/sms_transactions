@@ -1,7 +1,11 @@
 import 'package:sms_transactions/domain/models/money_pool.dart';
 import 'package:sms_transactions/domain/models/transaction.dart';
 
-typedef MonthlyBreakdownEntry = ({double income, double expense, double savings});
+typedef MonthlyBreakdownEntry = ({
+  double income,
+  double expense,
+  double savings,
+});
 
 class MonthlyBreakdown {
   MonthlyBreakdown._();
@@ -52,7 +56,8 @@ class MonthlyBreakdown {
   }
 
   static List<({int year, int month})> activeMonths(
-      List<Transaction> transactions) {
+    List<Transaction> transactions,
+  ) {
     final seen = <String>{};
     final months = <({int year, int month})>[];
     for (final t in transactions) {

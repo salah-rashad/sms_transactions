@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
-import 'package:provider/provider.dart';
-import 'package:sms_transactions/features/money_pool/providers/money_pool_provider.dart';
+import 'package:sms_transactions/features/money_pool/cubit/money_pool_cubit.dart';
 import 'package:sms_transactions/features/money_pool/widgets/year_month_picker.dart';
 
 void showAddContributionDialog(BuildContext context) {
@@ -53,10 +53,10 @@ void showAddContributionDialog(BuildContext context) {
                 onPressed: () {
                   final amount = double.tryParse(amountController.text);
                   if (amount == null || amount <= 0) return;
-                  context.read<MoneyPoolProvider>().addContribution(
-                        amount,
-                        selectedDate,
-                      );
+                  context.read<MoneyPoolCubit>().addContribution(
+                    amount,
+                    selectedDate,
+                  );
                   Navigator.pop(ctx);
                 },
                 child: const Text('Add'),

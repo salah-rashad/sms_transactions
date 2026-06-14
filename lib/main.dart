@@ -1,9 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:hydrated_bloc/hydrated_bloc.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:sms_transactions/app.dart';
-import 'package:sms_transactions/data/database/app_database.dart';
+import 'package:sms_transactions/di/injection.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final db = AppDatabase();
-  runApp(App(db: db));
+
+  await setupDependencies();
+  HydratedBloc.storage = await HydratedStorage.build(
+    storageDirectory: await getApplicationDocumentsDirectory(),
+  );
+
+  runApp(const App());
 }

@@ -57,7 +57,9 @@ class MonthlySummaryTile extends StatelessWidget {
                     amount: savings,
                     color: colors.savings,
                     style: const TextStyle(
-                        fontWeight: FontWeight.w600, fontSize: 14),
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
                     prefix: 'Savings: ',
                   ),
                 ),
@@ -81,7 +83,12 @@ class MonthlySummaryTile extends StatelessWidget {
     );
   }
 
-  Widget _buildColumn(BuildContext context, String label, double value, Color color) {
+  Widget _buildColumn(
+    BuildContext context,
+    String label,
+    double value,
+    Color color,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

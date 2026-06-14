@@ -8,7 +8,8 @@ class SmsParser {
 
     final address = (sms.address ?? '').toLowerCase();
     final isBankAlAhly = address.contains('ahly');
-    final isVfCash = address.contains('vf-cash') ||
+    final isVfCash =
+        address.contains('vf-cash') ||
         address.contains('vf cash') ||
         address.contains('vodafone') ||
         address.contains('فودافون');
@@ -33,7 +34,10 @@ class SmsParser {
   }
 
   static Transaction? _parseBankAlAhlyTransfer(
-      SmsMessage sms, String body, TransactionType type) {
+    SmsMessage sms,
+    String body,
+    TransactionType type,
+  ) {
     final amountRegex = RegExp(r'بمبلغ\s+([\d,]+\.?\d*)\s*جم');
     final amountMatch = amountRegex.firstMatch(body);
     if (amountMatch == null) return null;
@@ -66,8 +70,9 @@ class SmsParser {
 
     final balanceRegex = RegExp(r'المتاح\s+([\d,]+\.?\d*)\s*جم');
     final balanceMatch = balanceRegex.firstMatch(body);
-    final balance =
-        balanceMatch != null ? _parseAmount(balanceMatch.group(1)!) : null;
+    final balance = balanceMatch != null
+        ? _parseAmount(balanceMatch.group(1)!)
+        : null;
 
     final date = sms.date ?? DateTime.now();
 
@@ -142,11 +147,11 @@ class SmsParser {
     final counterparty = _extractCounterpartyFromVf(body);
     final date = sms.date ?? DateTime.now();
 
-
     final balanceRegex = RegExp(r'رصيد(?:ك| حسابك الحالي)\s+([\d,]+\.?\d*)');
     final balanceMatch = balanceRegex.firstMatch(body);
-    final balance =
-        balanceMatch != null ? _parseAmount(balanceMatch.group(1)!) : null;
+    final balance = balanceMatch != null
+        ? _parseAmount(balanceMatch.group(1)!)
+        : null;
 
     return Transaction(
       id: '${sms.id ?? ''}-${body.hashCode}',
@@ -169,11 +174,11 @@ class SmsParser {
     final counterparty = _extractCounterpartyFromVf(body);
     final date = sms.date ?? DateTime.now();
 
-
     final balanceRegex = RegExp(r'رصيد(?:ك| حسابك الحالي)\s+([\d,]+\.?\d*)');
     final balanceMatch = balanceRegex.firstMatch(body);
-    final balance =
-        balanceMatch != null ? _parseAmount(balanceMatch.group(1)!) : null;
+    final balance = balanceMatch != null
+        ? _parseAmount(balanceMatch.group(1)!)
+        : null;
 
     return Transaction(
       id: '${sms.id ?? ''}-${body.hashCode}',
