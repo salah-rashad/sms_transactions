@@ -7,7 +7,6 @@ import 'package:sms_transactions/features/money_pool/cubit/money_pool_cubit.dart
 import 'package:sms_transactions/features/money_pool/cubit/money_pool_state.dart';
 import 'package:sms_transactions/features/money_pool/widgets/add_contribution_dialog.dart';
 import 'package:sms_transactions/shared/widgets/currency_text.dart';
-import 'package:sms_transactions/shared/widgets/theme_mode_button.dart';
 
 class MoneyPoolScreen extends StatefulWidget {
   const MoneyPoolScreen({super.key});
@@ -29,7 +28,6 @@ class _MoneyPoolScreenState extends State<MoneyPoolScreen> {
       appBar: AppBar(
         title: const Text('Money Pool (جمعية)'),
         actions: [
-          const ThemeModeButton(),
           IconButton(
             onPressed: _toggleLock,
             icon: AnimatedSwitcher(
