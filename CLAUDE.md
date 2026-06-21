@@ -1,4 +1,6 @@
 <!-- SPECKIT START -->
-For additional context about technologies to be used, project structure,
-shell commands, and other important information, read the current plan
+Active feature plan: `specs/001-sms-pattern-authoring/plan.md`
+(SMS Pattern Authoring & Unmatched SMS Triage). See its companion artifacts —
+`research.md`, `data-model.md`, `contracts/`, `quickstart.md` — for technologies,
+project structure, shell commands, and other important information.
 <!-- SPECKIT END -->
