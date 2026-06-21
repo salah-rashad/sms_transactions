@@ -58,7 +58,13 @@ class UnmatchedCubit extends Cubit<UnmatchedState> {
 
   Future<void> _reloadItems() async {
     try {
-      final items = await unmatchedRepository.getActive();
+      final raw = await unmatchedRepository.getActive();
+      // Enrich with transient bodies from the last scan (privacy I: bodies are
+      // held in-memory only, never persisted by the repo).
+      final items = [
+        for (final u in raw)
+          u.copyWith(body: u.body ?? scanService.bodyFor(u.smsId)),
+      ];
       final count = items.length;
       emit(
         state.copyWith(

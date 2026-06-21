@@ -72,6 +72,17 @@ class TextToken {
     required this.endIndex,
   });
 
+  static TextToken merge(List<TextToken> tokens) {
+    assert(tokens.isNotEmpty);
+    final sorted = [...tokens]
+      ..sort((a, b) => a.startIndex.compareTo(b.startIndex));
+    return TextToken(
+      rawText: sorted.map((t) => t.rawText).join(' '),
+      startIndex: sorted.first.startIndex,
+      endIndex: sorted.last.endIndex,
+    );
+  }
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||

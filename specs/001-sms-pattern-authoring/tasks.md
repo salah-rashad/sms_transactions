@@ -100,15 +100,15 @@ Single-project layered Flutter app. Paths are repo-relative, matching [plan.md](
 
 **Independent Test**: From the list, Teach one SMS → amount chip → balance/skip → direction → counterparty/skip → summary → Save; a pattern persists, a transaction (dated to the SMS) appears, and you return to the list (FR-008–016, <60s).
 
-- [ ] T027 [P] [US2] Create `PatternAuthoringState` (tokens, stepIndex, selections, `editing` pattern ref, preview) in `lib/features/pattern_authoring/cubit/pattern_authoring_state.dart` per [contracts/cubits.contract.md](contracts/cubits.contract.md).
-- [ ] T028 [US2] Implement `PatternAuthoringCubit` accepting the SMS body **and an optional existing `SmsPattern` for edit mode** (FR-021, U1): `selectAmount/Balance/Direction/Counterparty`, `back`, `save`; uses `SmsTokenizer` + `PatternMatcher`; edit mode pre-selects from existing locators and preserves counters. In `lib/features/pattern_authoring/cubit/pattern_authoring_cubit.dart` (depends on T027, T009, T013).
-- [ ] T029 [P] [US2] Create `TokenChip` widget (tappable, de-emphasis for likely-non-transactional, RTL-aware) in `lib/features/pattern_authoring/widgets/token_chip.dart` (FR-008, FR-030).
-- [ ] T030 [P] [US2] Create `StepAmount` and `StepBalance` widgets in `lib/features/pattern_authoring/widgets/step_amount.dart` and `step_balance.dart` (FR-009, FR-010).
-- [ ] T031 [P] [US2] Create `StepDirection` and `StepCounterparty` widgets in `lib/features/pattern_authoring/widgets/step_direction.dart` and `step_counterparty.dart` (FR-011, FR-012).
-- [ ] T032 [P] [US2] Create `AuthoringSummary` widget (live preview with labeled extracted values) in `lib/features/pattern_authoring/widgets/authoring_summary.dart` (FR-014).
-- [ ] T033 [US2] Build `PatternAuthoringScreen` (step counter, Back preserving later selections, cubit-driven stepper; accepts create- or edit-mode input via route `extra`) in `lib/features/pattern_authoring/pattern_authoring_screen.dart` (FR-013, U1; depends on T028, T029–T032).
-- [ ] T034 [US2] Add `/unmatched/teach` route (carrying the selected `UnmatchedSms`, and optional `SmsPattern` for edit) in `lib/router/app_router.dart` and wire the list's Teach action to it (depends on T033, T022).
-- [ ] T035 [US2] Implement `save()`: derive+persist the `SmsPattern` (or update in edit mode), parse the example into a `PatternMatch` (transaction dated to received timestamp), refresh `UnmatchedCubit`, and pop back to the list (FR-015; depends on T028, T020).
+- [x] T027 [P] [US2] Create `PatternAuthoringState` (tokens, stepIndex, selections, `editing` pattern ref, preview) in `lib/features/pattern_authoring/cubit/pattern_authoring_state.dart` per [contracts/cubits.contract.md](contracts/cubits.contract.md).
+- [x] T028 [US2] Implement `PatternAuthoringCubit` accepting the SMS body **and an optional existing `SmsPattern` for edit mode** (FR-021, U1): `selectAmount/Balance/Direction/Counterparty`, `back`, `save`; uses `SmsTokenizer` + `PatternMatcher`; edit mode pre-selects from existing locators and preserves counters. In `lib/features/pattern_authoring/cubit/pattern_authoring_cubit.dart` (depends on T027, T009, T013).
+- [x] T029 [P] [US2] Create `TokenChip` widget (tappable, de-emphasis for likely-non-transactional, RTL-aware) in `lib/features/pattern_authoring/widgets/token_chip.dart` (FR-008, FR-030).
+- [x] T030 [P] [US2] Create `StepAmount` and `StepBalance` widgets in `lib/features/pattern_authoring/widgets/step_amount.dart` and `step_balance.dart` (FR-009, FR-010).
+- [x] T031 [P] [US2] Create `StepDirection` and `StepCounterparty` widgets in `lib/features/pattern_authoring/widgets/step_direction.dart` and `step_counterparty.dart` (FR-011, FR-012).
+- [x] T032 [P] [US2] Create `AuthoringSummary` widget (live preview with labeled extracted values) in `lib/features/pattern_authoring/widgets/authoring_summary.dart` (FR-014).
+- [x] T033 [US2] Build `PatternAuthoringScreen` (step counter, Back preserving later selections, cubit-driven stepper; accepts create- or edit-mode input via route `extra`) in `lib/features/pattern_authoring/pattern_authoring_screen.dart` (FR-013, U1; depends on T028, T029–T032).
+- [x] T034 [US2] Add `/unmatched/teach` route (carrying the selected `UnmatchedSms`, and optional `SmsPattern` for edit) in `lib/router/app_router.dart` and wire the list's Teach action to it (depends on T033, T022).
+- [x] T035 [US2] Implement `save()`: derive+persist the `SmsPattern` (or update in edit mode), parse the example into a `PatternMatch` (transaction dated to received timestamp), refresh `UnmatchedCubit`, and pop back to the list (FR-015; depends on T028, T020).
 
 **Checkpoint**: US1 + US2 work — users can teach a sender and see the transaction appear.
 

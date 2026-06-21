@@ -39,6 +39,15 @@ class SmsScanService {
   final UnmatchedSmsRepository unmatchedSmsRepository;
   final SuppressedSenderRepository suppressedSenderRepository;
 
+  /// Transient in-memory smsId→body cache (privacy I: bodies are NEVER
+  /// persisted). Populated on each [scan] so the unmatched list and the
+  /// authoring wizard can display/teach from the body without re-querying the
+  /// inbox.
+  final Map<String, String> _bodyCache = {};
+
+  /// Returns the cached body for [smsId] from the last scan, or null.
+  String? bodyFor(String smsId) => _bodyCache[smsId];
+
   /// Runs the launch/manual scan (research R3/R8 pass 3, FR-024/025/035/042):
   /// 1. Reads candidate SMS (alphanumeric senders + already-patterned, R2).
   /// 2. Matches each against learned patterns off the main isolate (R3).
@@ -60,16 +69,22 @@ class SmsScanService {
 
     final messages = await smsService.getCandidateSms(patternedSenders);
 
-    // Build the isolate input (plain sendable payloads).
-    final smsInputs = [
-      for (final m in messages)
-        _SmsInput(
-          id: m.id?.toString() ?? '',
-          senderId: m.address ?? '',
-          body: m.body ?? '',
-          receivedMs: (m.date ?? DateTime.now()).millisecondsSinceEpoch,
-        ),
-    ];
+    // Build the isolate input (plain sendable payloads). Cache bodies in-memory
+    // for display + authoring (never persisted — privacy I).
+    final smsInputs = <_SmsInput>[];
+    for (final m in messages) {
+      final id = m.id?.toString() ?? '';
+      final body = m.body ?? '';
+      if (id.isNotEmpty && body.isNotEmpty) {
+        _bodyCache[id] = body;
+      }
+      smsInputs.add(_SmsInput(
+        id: id,
+        senderId: m.address ?? '',
+        body: body,
+        receivedMs: (m.date ?? DateTime.now()).millisecondsSinceEpoch,
+      ));
+    }
 
     // Heavy matching runs off the main isolate (R3).
     final matched = await compute(_runMatching, _IsolateInput(smsInputs, patterns));

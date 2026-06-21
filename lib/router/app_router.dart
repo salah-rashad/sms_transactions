@@ -1,8 +1,17 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:sms_transactions/data/repositories/pattern_repository.dart';
+import 'package:sms_transactions/data/repositories/unmatched_sms_repository.dart';
+import 'package:sms_transactions/di/injection.dart';
+import 'package:sms_transactions/domain/models/sms_pattern.dart';
+import 'package:sms_transactions/domain/models/unmatched_sms.dart';
 import 'package:sms_transactions/features/accounts/accounts_screen.dart';
 import 'package:sms_transactions/features/dashboard/dashboard_screen.dart';
 import 'package:sms_transactions/features/home/main_screen.dart';
 import 'package:sms_transactions/features/money_pool/money_pool_screen.dart';
+import 'package:sms_transactions/features/pattern_authoring/cubit/pattern_authoring_cubit.dart';
+import 'package:sms_transactions/features/pattern_authoring/pattern_authoring_screen.dart';
 import 'package:sms_transactions/features/settings/settings_screen.dart';
 import 'package:sms_transactions/features/transactions/transactions_screen.dart';
 import 'package:sms_transactions/features/unmatched/unmatched_screen.dart';
@@ -80,6 +89,38 @@ class AppRouter {
       GoRoute(
         path: '/unmatched',
         builder: (context, state) => const UnmatchedScreen(),
+        routes: [
+          GoRoute(
+            path: 'teach',
+            builder: (context, state) {
+              final extra = state.extra;
+              final UnmatchedSms source;
+              SmsPattern? editing;
+
+              if (extra is UnmatchedSms) {
+                source = extra;
+              } else if (extra is ({UnmatchedSms sms, SmsPattern pattern})) {
+                source = extra.sms;
+                editing = extra.pattern;
+              } else {
+                return const Scaffold(
+                  body: Center(child: Text('Missing SMS data')),
+                );
+              }
+
+              return BlocProvider(
+                create: (_) => PatternAuthoringCubit(
+                  source: source,
+                  editing: editing,
+                  patternRepository: getIt<PatternRepository>(),
+                  patternMatchRepository: getIt<PatternMatchRepository>(),
+                  unmatchedSmsRepository: getIt<UnmatchedSmsRepository>(),
+                ),
+                child: const PatternAuthoringScreen(),
+              );
+            },
+          ),
+        ],
       ),
     ],
   );
