@@ -162,21 +162,6 @@ Once a pattern is saved, all new incoming SMS from the same sender are parsed au
 - **FR-015**: Saving the pattern MUST immediately re-parse the example SMS and add the resulting transaction to the ledger. The transaction date MUST be the SMS received timestamp.
 - **FR-016**: The system MUST derive a regex or structural anchor pattern from the user's chip selections — not store chip index positions — to handle variable amounts in future messages.
 
-**Tokenization & Number Detection**
-
-- **FR-026**: A "numeric token" is any contiguous sequence of digits (0–9 and Arabic-Indic ٠–٩) optionally containing comma-thousands separators, period-decimal separators, or both. Token boundaries are whitespace, currency symbols, parentheses, or any non-digit non-separator character.
-- **FR-027**: The tokenizer MUST support these number formats: plain integers (5000), comma-thousands with period-decimal (5,000.00), period-thousands with comma-decimal (5.000,00), Arabic-Indic digits (٥٬٠٠٠٫٠٠), and no-separator decimals (5000.00).
-- **FR-028**: Ambiguous formats (e.g., "1,500" — could be 1500 or 1.5) MUST be resolved using the locale/currency context of the sender's previous patterns. If no prior context exists, assume comma-as-thousands (Egyptian banking convention).
-- **FR-029**: For counterparty selection (Step 4), "text tokens" are segmented by whitespace boundaries. Each whitespace-delimited word is a selectable token. Punctuation attached to a word is included in the token.
-- **FR-030**: Tokenization MUST handle mixed LTR/RTL content correctly — chips MUST be positioned following the logical text order of the SMS, not reversed. The visual layout MUST respect the base direction of the SMS content.
-
-**Pattern Derivation & Matching Behavior**
-
-- **FR-031**: The derived pattern MUST use surrounding anchor tokens (the fixed text before and after each selected chip) to locate variable values. The pattern MUST preserve the relative order of anchors as they appear in the teaching SMS.
-- **FR-032**: Anchors MUST capture complete whitespace-delimited words adjacent to the selected chip. At minimum, one word before and one word after each chip MUST be captured as anchors.
-- **FR-033**: The derived pattern MUST tolerate minor whitespace and line-break variations between the teaching SMS and future SMS. Extra spaces, tab characters, and newline differences MUST NOT cause a match failure.
-- **FR-034**: When multiple patterns exist for the same sender, they MUST be tried in creation-date order (oldest first). The first pattern whose amount anchor resolves wins.
-
 **Dismiss & Suppression**
 
 - **FR-017**: Dismissing a message MUST suppress all future messages from the same sender from appearing in the unmatched queue.
@@ -194,6 +179,24 @@ Once a pattern is saved, all new incoming SMS from the same sender are parsed au
 
 - **FR-024**: The app MUST scan the SMS inbox automatically on each app launch in the background. All new SMS from senders with a saved pattern MUST be parsed automatically. Unmatched SMS MUST be added to the unmatched queue. The dashboard card MUST appear once the scan completes.
 - **FR-025**: SMS from a known sender that does NOT match the saved pattern MUST be routed to the unmatched queue, not silently dropped. A match is considered successful when the amount anchor resolves; balance and counterparty anchors are best-effort (extracted if found, stored as null if not). A match fails only when the amount anchor cannot be resolved.
+
+**Tokenization & Number Detection**
+
+- **FR-026**: A "numeric token" is any contiguous sequence of digits (0–9 and Arabic-Indic ٠–٩) optionally containing comma-thousands separators, period-decimal separators, or both. Token boundaries are whitespace, currency symbols, parentheses, or any non-digit non-separator character.
+- **FR-027**: The tokenizer MUST support these number formats: plain integers (5000), comma-thousands with period-decimal (5,000.00), period-thousands with comma-decimal (5.000,00), Arabic-Indic digits (٥٬٠٠٠٫٠٠), and no-separator decimals (5000.00).
+- **FR-028**: Ambiguous formats (e.g., "1,500" — could be 1500 or 1.5) MUST be resolved using the locale/currency context of the sender's previous patterns. If no prior context exists, assume comma-as-thousands (Egyptian banking convention).
+- **FR-029**: For counterparty selection (Step 4), "text tokens" are segmented by whitespace boundaries. Each whitespace-delimited word is a selectable token. Punctuation attached to a word is included in the token.
+- **FR-030**: Tokenization MUST handle mixed LTR/RTL content correctly — chips MUST be positioned following the logical text order of the SMS, not reversed. The visual layout MUST respect the base direction of the SMS content.
+
+**Pattern Derivation & Matching Behavior**
+
+- **FR-031**: The derived pattern MUST use surrounding anchor tokens (the fixed text before and after each selected chip) to locate variable values. The pattern MUST preserve the relative order of anchors as they appear in the teaching SMS.
+- **FR-032**: Anchors MUST capture complete whitespace-delimited words adjacent to the selected chip. At minimum, one word before and one word after each chip MUST be captured as anchors.
+- **FR-033**: The derived pattern MUST tolerate minor whitespace and line-break variations between the teaching SMS and future SMS. Extra spaces, tab characters, and newline differences MUST NOT cause a match failure.
+- **FR-034**: When multiple patterns exist for the same sender, they MUST be tried in creation-date order (oldest first). The first pattern whose amount anchor resolves wins.
+
+**No Hardcoded Parsing**
+
 - **FR-035**: The app MUST NOT contain hardcoded, per-sender parsing logic. All SMS parsing MUST be performed exclusively through user-authored patterns. Every transaction in the ledger MUST originate from a learned pattern match. Senders that were previously handled by built-in parsing MUST appear in the unmatched queue until the user teaches a pattern for them (no migration or pre-seeding of built-in patterns).
 
 ### Key Entities
