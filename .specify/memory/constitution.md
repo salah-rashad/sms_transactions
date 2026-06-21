@@ -1,18 +1,27 @@
 <!--
   SYNC IMPACT REPORT
   ==================
-  Version change: N/A (initial) -> 1.0.0
-  Modified principles: N/A (initial ratification)
-  Added sections:
-    - Core Principles (5 principles)
-    - Technology Stack & Constraints
-    - Development Workflow
-    - Governance
+  Version change: 1.0.0 -> 2.0.0
+  Bump rationale: MAJOR — Principle IV redefinition. The normative clause
+    "Rule-based parsing remains the fallback; it is not replaced but augmented
+    by learned patterns" is inverted to mandate fully-dynamic, user-authored
+    parsing with NO developer-hardcoded per-sender parsers. This is
+    backward-incompatible: a design relying on the old hardcoded fallback is
+    now non-compliant. Driven by feature 001-sms-pattern-authoring (FR-035).
+  Modified principles:
+    - IV. Intelligence Through Learning (clause redefined; title unchanged)
+  Added sections: None
   Removed sections: None
   Templates requiring updates:
-    - plan-template.md: ✅ aligned (Constitution Check section present)
-    - spec-template.md: ✅ aligned (user stories, requirements, success criteria)
-    - tasks-template.md: ✅ aligned (phased delivery, parallel opportunities)
+    - plan-template.md: ✅ aligned (Constitution Check section is generic)
+    - spec-template.md: ✅ aligned (no principle-specific mandatory sections)
+    - tasks-template.md: ✅ aligned (phased delivery unaffected)
+  Dependent artifacts requiring manual follow-up:
+    - specs/001-sms-pattern-authoring/plan.md: ⚠ update Constitution Check row IV
+      (now compliant — remove "reinterpretation" caveat) and the stale
+      "consulting the legacy parser first" line.
+    - specs/001-sms-pattern-authoring/research.md: ⚠ R8 Constitution IV note now
+      reflects the amended principle (no longer a reinterpretation).
   Follow-up TODOs: None
 -->
 
@@ -75,7 +84,7 @@ replacement of data sources, and clear ownership boundaries.
 
 ### IV. Intelligence Through Learning
 
-The system MUST evolve from rule-based SMS parsing toward
+The system MUST evolve from deterministic pattern matching toward
 embedding-based similarity search and user-driven learning.
 
 - Show intelligence before asking for user input.
@@ -84,12 +93,19 @@ embedding-based similarity search and user-driven learning.
 - Ask for confirmation only on low-confidence classifications.
 - User corrections MUST feed back into the learning layer
   (merchant profiles, similarity clusters, pattern confidence).
-- Rule-based parsing remains the fallback; it is not replaced
-  but augmented by learned patterns.
+- Parsing MUST be fully dynamic and user-authored: the app MUST
+  NOT ship developer-hardcoded, per-sender parsers. User-taught
+  deterministic patterns (anchor/regex rules) ARE the rule-based
+  base layer and serve as the deterministic fallback beneath any
+  future embedding/similarity learning. New senders are learned
+  through user teaching, never pre-coded.
 
 **Rationale**: The app's long-term value is proportional to its
-ability to classify transactions autonomously. Learning from
-user feedback is the path to that autonomy.
+ability to classify transactions autonomously across an open,
+unbounded set of senders. Hardcoded per-sender parsers do not
+scale and create maintenance debt; a user-authored deterministic
+pattern layer beneath the learning layer is both extensible and
+the path to autonomy.
 
 ### V. Simplicity & YAGNI
 
@@ -157,4 +173,4 @@ supersedes ad-hoc conventions and implicit patterns.
 - **Runtime Guidance**: Use `CLAUDE.md` for agent-specific
   development guidance that complements this constitution.
 
-**Version**: 1.0.0 | **Ratified**: 2026-06-21 | **Last Amended**: 2026-06-21
+**Version**: 2.0.0 | **Ratified**: 2026-06-21 | **Last Amended**: 2026-06-21

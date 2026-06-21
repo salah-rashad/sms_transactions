@@ -249,7 +249,7 @@ Once a pattern is saved, all new incoming SMS from the same sender are parsed au
 - A single sender maps to at most a small number of distinct pattern formats; edge-case multi-format support (FR-016) is deferred to a later iteration unless it surfaces naturally.
 - The number tokenizer can reliably detect numeric tokens including comma-separated and period-decimal formats (e.g., "5,000.00") in both LTR and RTL strings.
 - Counterparty identification is optional in all patterns; many Egyptian bank SMS do not include merchant names.
-- "Balance Check Only" as a transaction direction means the SMS is informational (no debit/credit) and is stored as a balance snapshot, not a ledger entry.
+- "Balance Check Only" as a transaction direction means the SMS is informational (no debit/credit). It is stored as a balance-snapshot transaction record but is excluded from income/expense aggregation (consistent with the existing app's handling of `TransactionType.balanceCheck`).
 - The re-scan feature operates on the local SMS inbox snapshot already loaded by the app, not a fresh inbox read, to avoid redundant permission prompts.
 - All learned patterns and unmatched SMS are stored exclusively on-device in the local Drift database, consistent with Constitution Principle I.
 - Data retention: UnmatchedSms records for dismissed senders are removed when SuppressedSender is created. UnmatchedSms records for matched SMS are removed when the PatternMatch is created. Orphaned records (inbox message deleted) are pruned on scan. No indefinite accumulation of stale records.
