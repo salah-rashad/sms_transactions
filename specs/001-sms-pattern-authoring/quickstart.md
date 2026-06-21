@@ -39,6 +39,8 @@ Expected: tokenizer handles Latin + Arabic-Indic digits and mixed LTR/RTL (SC-00
 | 8 | FR-018 | Settings → SMS Sources → Unsuppress a previously dismissed sender | Its historical SMS re-enter the unmatched queue. |
 | 9 | FR-023 | Settings → SMS Sources → Re-scan when a matching transaction already exists | You are prompted to confirm before overwriting; declining leaves existing transactions intact; no duplicates created (FR-039/040). |
 | 10 | SC-007 | Run on an inbox with 10,000+ SMS | Scan/match completes without visible UI jank (work runs off the main isolate, R3). |
+| 11 | R8 / I1 | With `BanK-AlAhly` / `VF-Cash` SMS present (handled by the legacy parser), launch and check the unmatched queue and ledger | Those senders do **not** appear in the unmatched queue, and each handled SMS yields exactly **one** transaction (no duplicates). Teaching a pattern for such a sender still produces no duplicate. |
+| 12 | R9 / I2 | Launch with a large inbox and a non-empty queue from a previous session | The dashboard card appears within ~1s showing the cached count, then updates after the background scan completes. |
 
 ## Definition of done (validation)
 - Scenarios 1–10 pass on-device.

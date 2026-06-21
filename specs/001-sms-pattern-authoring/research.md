@@ -4,15 +4,15 @@ This document resolves the open technical decisions surfaced while mapping the s
 
 ---
 
-## R1. The ledger: ephemeral vs. persisted
+## R1. The ledger: fully persisted, learned-only (revised pass 3)
 
-**Decision**: Persist learned-pattern results in a new `PatternMatches` Drift table. Keep the existing hardcoded `SmsParser` output ephemeral. At load time, the transaction list = (hardcoded-parser results, re-derived) ∪ (persisted `PatternMatches`, read from DB).
+**Decision**: The ledger is **entirely** the persisted `PatternMatches` Drift table. Every transaction originates from a learned pattern match (FR-035). The hardcoded `SmsParser` is removed; there is no ephemeral parse path. At load time, the transaction list = `PatternMatchRepository.getAll()` mapped to `Transaction` objects.
 
-**Rationale**: The current app holds **no** transaction table — `TransactionCubit.loadTransactions()` re-derives every transaction from SMS on each launch (`lib/features/transactions/cubit/transaction_cubit.dart`). The clarified spec requires that transactions created by a learned pattern **survive deletion of that pattern** (FR-022) and that re-scan can detect an SMS already has a transaction in order to prompt before overwriting (FR-023). Neither is possible with purely ephemeral derivation. Persisting only the learned-pattern matches (the new surface) — while leaving the two hardcoded senders ephemeral — is the minimal change that satisfies the spec without a risky migration of existing parsing.
+**Rationale**: The current app holds **no** transaction table — `TransactionCubit.loadTransactions()` re-derives every transaction from SMS on each launch via the hardcoded `SmsParser` (`lib/features/transactions/cubit/transaction_cubit.dart`). The clarified spec requires transactions to **survive deletion of their pattern** (FR-022) and re-scan to detect already-parsed SMS (FR-023) — both require persistence. With the pass-3 decision to remove all hardcoded parsing (FR-035), there is no longer a second ephemeral source to union in; the persisted matches ARE the ledger. This is simpler than the earlier hybrid (no union, single source of truth per `smsId`).
 
 **Alternatives considered**:
-- *Fully ephemeral (no new table)*: rejected — deleting a pattern would erase its history on next load, contradicting FR-022.
-- *Migrate everything (hardcoded senders too) into the persisted ledger*: rejected by YAGNI (Constitution V) and IV ("augment, not replace"). Larger blast radius, no requirement demands it now.
+- *Hybrid (hardcoded ephemeral ∪ persisted learned)*: superseded by the pass-3 "fully dynamic" decision — the user explicitly wants the hardcoded parsers gone.
+- *Keep hardcoded as seed patterns*: rejected by the user ("delete entirely, re-teach") — no migration/seeding.
 
 **Privacy note (Constitution I)**: `PatternMatches` stores only the inbox message ID, matched pattern ID, and *extracted values* (amount, balance, direction, counterparty) — never the raw SMS body.
 
@@ -91,16 +91,44 @@ This document resolves the open technical decisions surfaced while mapping the s
 
 ---
 
+## R8. Remove the hardcoded `SmsParser`; fully dynamic parsing (revised pass 3 — supersedes the earlier legacy-reconciliation decision; closes analyze finding I1)
+
+**Decision**: Delete the hardcoded per-sender `SmsParser` logic (`_parseBankAlAhly*`, `_parseVfCash*`, the `AccountSource` enum's parsing role). The scan classifies an SMS as **matched** only when a learned `SmsPattern` matches; otherwise (and if the sender is alphanumeric and not suppressed) it goes to the unmatched queue. No legacy fallback path exists. No migration or pre-seeding — previously hardcoded senders simply appear in the unmatched queue until taught (user choice: "delete entirely, re-teach").
+
+**Why this supersedes the earlier R8**: The previous R8 kept `SmsParser` as a first-pass fallback to avoid duplicates and preserve continuity. The user has since directed that the hardcoded accounts/patterns must no longer be used and the app be fully dynamic. With no legacy path, the duplicate/precedence concern (analyze finding I1) disappears entirely — there is only one parser (the pattern engine), so one source per `smsId` is automatic.
+
+**Constitution IV note**: Principle IV says "rule-based parsing remains the fallback; it is not replaced but augmented." Interpreted at the level of *approach*, the requirement is preserved: the pattern engine **is** the rule-based system (deterministic anchor/regex rules), now sitting beneath any future embedding/similarity layer. What changes is authorship — developer-hardcoded rules become user-authored rules. The deterministic rule-based tier still exists as the fallback for the learning layer. This is a defensible reading; flagged explicitly in plan.md's Constitution Check for visibility.
+
+**Consequence**: `SmsScanService` depends only on `PatternMatcher` (+ tokenizer). `Transaction.source` changes from the `AccountSource` enum to the sender identifier string (accounts are discovered dynamically). `SmsService.getFinancialSms()` (which queried only the two hardcoded addresses) is replaced by `getCandidateSms()` (alphanumeric senders, R2). `TransactionCubit` loads the ledger entirely from `PatternMatchRepository`.
+
+**Alternatives considered** (all rejected by the user's directive): keep parser as fallback; seed legacy rules as editable patterns; one-time importer.
+
+---
+
+## R9. Dashboard card latency vs. background scan (resolves analyze finding I2)
+
+**Decision**: On launch, `UnmatchedCubit` first reads the **persisted** `UnmatchedSmsRecords` count (a fast indexed DB read) and emits it immediately so the dashboard card can render within ~1s (SC-005). It then runs the background scan (R3) and re-emits the refreshed count when the scan completes (FR-024). The card's count is "last known + updating," never blocked on the full scan.
+
+**Rationale**: SC-005 ("card within 1s") and FR-024 ("card appears once scan completes") are only in tension if the card waits for a 10k-SMS scan. Serving the cached count first satisfies both: instant render from the previous session's persisted queue, eventual consistency after the new scan. No requirement change needed — this is the engineering reconciliation.
+
+**Alternatives considered**:
+- *Block the card on scan completion*: rejected — violates SC-005 on large inboxes.
+- *Always show a spinner until scan done*: rejected — worse UX and still misses the 1s target.
+
+---
+
 ## Summary of decisions
 
 | # | Decision |
 |---|----------|
-| R1 | Persist learned-pattern matches in a new `PatternMatches` table; hardcoded senders stay ephemeral |
+| R1 | Ledger is entirely persisted `PatternMatches` (learned-only); no ephemeral parse path (pass 3) |
 | R2 | Unmatched queue considers alphanumeric senders (or already-patterned senders); excludes personal phone numbers |
 | R3 | Scan + tokenize + match in a `compute()` isolate; Drift/plugin stay on main isolate |
 | R4 | Patterns stored as text anchor locators; regex derived at match time with `\s+` tolerance |
 | R5 | One pure tokenizer for Latin + Arabic-Indic digits/separators; locale-based ambiguity resolution |
 | R6 | 4-step wizard = one GoRoute + `PatternAuthoringCubit`; step index in state |
 | R7 | One app-scoped `UnmatchedCubit` shared by dashboard card and unmatched screen |
+| R8 | Remove the hardcoded `SmsParser`; fully dynamic — only learned patterns parse; `Transaction.source` becomes the sender string (pass 3) |
+| R9 | Dashboard card renders the cached persisted-queue count instantly, then refreshes after the background scan |
 
 All decisions are consistent with Constitution v1.0.0. No new dependencies introduced.

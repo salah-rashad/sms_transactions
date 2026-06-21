@@ -28,6 +28,10 @@
 - Q: Should non-transactional numbers (phone numbers, OTPs, dates) be filtered from chip selection? → A: Show all tokens but visually de-emphasize likely non-transactional numbers using heuristic hints.
 - Q: When suppression is removed from a sender, do historical SMS re-enter the unmatched queue? → A: Yes — historical SMS re-enter the unmatched queue, consistent with pattern deletion behavior.
 
+### Session 2026-06-21 (pass 3) — Fully dynamic parsing
+
+- Q: Should the app ship with hardcoded parsers for known senders (BanK-AlAhly, VF-Cash)? → A: No. Remove all hardcoded per-sender parsing. The app is fully dynamic — every sender, including ones previously hardcoded, is learned via the authoring wizard. Previously hardcoded senders re-enter the unmatched queue until the user teaches them (no migration, no pre-seeding).
+
 ---
 
 ## User Scenarios & Testing *(mandatory)*
@@ -190,6 +194,7 @@ Once a pattern is saved, all new incoming SMS from the same sender are parsed au
 
 - **FR-024**: The app MUST scan the SMS inbox automatically on each app launch in the background. All new SMS from senders with a saved pattern MUST be parsed automatically. Unmatched SMS MUST be added to the unmatched queue. The dashboard card MUST appear once the scan completes.
 - **FR-025**: SMS from a known sender that does NOT match the saved pattern MUST be routed to the unmatched queue, not silently dropped. A match is considered successful when the amount anchor resolves; balance and counterparty anchors are best-effort (extracted if found, stored as null if not). A match fails only when the amount anchor cannot be resolved.
+- **FR-035**: The app MUST NOT contain hardcoded, per-sender parsing logic. All SMS parsing MUST be performed exclusively through user-authored patterns. Every transaction in the ledger MUST originate from a learned pattern match. Senders that were previously handled by built-in parsing MUST appear in the unmatched queue until the user teaches a pattern for them (no migration or pre-seeding of built-in patterns).
 
 ### Key Entities
 
@@ -239,7 +244,8 @@ Once a pattern is saved, all new incoming SMS from the same sender are parsed au
 ## Assumptions
 
 - The app already has SMS inbox read permission; this feature does not introduce a new permission grant flow.
-- "Sender identifier" is the sender address/alphanumeric tag as returned by the SMS inbox (e.g., "BANQUE-MISR", "+20100…").
+- "Sender identifier" is the sender address/alphanumeric tag as returned by the SMS inbox (e.g., "BANQUE-MISR", "+20100…"). It also serves as the transaction's account/source label (there is no fixed enumeration of accounts — accounts are discovered dynamically as the user teaches senders).
+- The app ships with NO built-in sender knowledge. On first run (or after upgrading from a build that had hardcoded parsing), all financial senders appear in the unmatched queue until taught. The previously hardcoded `SmsParser` is removed.
 - A single sender maps to at most a small number of distinct pattern formats; edge-case multi-format support (FR-016) is deferred to a later iteration unless it surfaces naturally.
 - The number tokenizer can reliably detect numeric tokens including comma-separated and period-decimal formats (e.g., "5,000.00") in both LTR and RTL strings.
 - Counterparty identification is optional in all patterns; many Egyptian bank SMS do not include merchant names.

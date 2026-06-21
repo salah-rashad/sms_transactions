@@ -41,9 +41,11 @@ Future<void> unsuppress(String senderId);                  // re-activate (FR-01
 Orchestrates the launch/manual scan. Heavy matching runs in a `compute()` isolate (R3).
 ```dart
 /// Reads candidate SMS (alphanumeric senders or already-patterned, R2),
-/// matches against all patterns off the main isolate, then persists:
+/// matches each against learned patterns off the main isolate (R3/R8),
+/// then persists:
 ///  - new PatternMatches (skipping smsIds already matched, unless [overwrite])
-///  - UnmatchedSmsRecords for unmatched, non-suppressed senders
+///  - UnmatchedSmsRecords when no learned pattern matches AND sender is not
+///    suppressed (R8 pass 3 — no hardcoded-parser exception, FR-035)
 ///  - prunes orphaned unmatched records (FR-042)
 /// Returns a summary (new matches, unmatched count, conflicts needing confirmation).
 Future<ScanResult> scan({bool overwrite = false});
@@ -55,6 +57,8 @@ class ScanResult {
 }
 ```
 
+> **Fully dynamic (R8 pass 3, FR-035)**: there is no legacy `SmsParser`. The isolate worker tries only learned patterns (`PatternMatcher.matchAny`). An SMS with no matching pattern (and an alphanumeric, non-suppressed sender) becomes an `UnmatchedSmsRecord`. Since the pattern engine is the only parser, each `smsId` has at most one `PatternMatch` → no duplicates by construction.
+
 ### Behavioral contract
 | Scenario | Expected |
 |----------|----------|
@@ -64,6 +68,8 @@ class ScanResult {
 | suppressed sender sends new SMS | no unmatched record created (FR-017) |
 | inbox SMS deleted since last scan | its UnmatchedSmsRecord pruned; PatternMatch retained (FR-042) |
 | personal phone-number sender | excluded from candidates (R2) |
+| previously hardcoded sender (BanK-AlAhly/VF-Cash), not yet taught | no learned pattern → routed to the unmatched queue like any new sender (FR-035) |
+| same sender after the user teaches a pattern | auto-parsed into a single PatternMatch; no duplicate (one parser only) |
 
 ### Invariants
 - Zero network calls (Constitution I). No raw body persisted (only ids + extracted values).

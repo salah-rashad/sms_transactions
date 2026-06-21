@@ -10,16 +10,22 @@ class UnmatchedState {           // immutable + copyWith
   final UnmatchedStatus status;            // initial | scanning | ready | error
 }
 
-Future<void> runLaunchScan();              // FR-024 (called once on app start)
+Future<void> loadCachedCount();            // R9: instant read of persisted activeCount (SC-005)
+Future<void> runLaunchScan();              // FR-024 (called once on app start, after loadCachedCount)
 Future<void> refresh();
 Future<void> dismissSender(String senderId);   // US3 / FR-017
 ```
 - Card visible iff `count > 0` (FR-001/003/004). Updates reactively after teach/dismiss.
+- **R9 (resolves I2)**: on launch, `loadCachedCount()` emits the persisted queue count immediately (card renders within ~1s, SC-005); `runLaunchScan()` then refreshes it once the background scan completes (FR-024).
 
 ## PatternAuthoringCubit — `lib/features/pattern_authoring/cubit/` (route-scoped for `/unmatched/teach`)
+
+**Construction (resolves U1)**: the cubit accepts the SMS body to teach plus an *optional* existing `SmsPattern` for **edit mode** (FR-021). In edit mode it pre-loads `exampleBody`, re-derives the token lists, and pre-selects amount/balance/direction/counterparty from the existing locators; on save it updates the existing pattern **preserving** `totalAttempts`/`successfulMatches` (FR-020). In create mode the existing-pattern argument is null.
+
 ```dart
 class PatternAuthoringState {     // immutable + copyWith
-  final UnmatchedSms source;               // sms being taught (or existing pattern on edit)
+  final UnmatchedSms source;               // sms being taught
+  final SmsPattern? editing;               // non-null in edit mode (FR-021); counters preserved
   final List<NumericToken> numericTokens;  // FR-008 (de-emphasis flag included)
   final List<TextToken> textTokens;        // FR-029
   final int stepIndex;                     // 0..3 (+summary); back preserves later steps (FR-013)

@@ -72,6 +72,8 @@ State transitions (spec §Key Entities): Unmatched → Matched (record deleted o
 
 - **Cardinality**: 1 PatternMatch ↔ 1 ledger Transaction (FR-015). `smsId` PK prevents duplicates (FR-039/FR-040).
 - **On pattern delete**: row is retained; `patternId` may be nulled (transaction stays — FR-022).
+- **`balanceCheck` direction** (resolves analyze finding I3): a `balanceCheck` PatternMatch **still** maps 1:1 to a Transaction record (a balance *snapshot*), consistent with the existing app where `TransactionType.balanceCheck` is a `Transaction` used for balance display. "Not a ledger entry" in the spec Assumptions means it is **excluded from income/expense aggregation**, not that the record is absent. The existing analytics already exclude `balanceCheck` from income/expense sums; the learned path reuses that behavior. No special storage shape needed.
+- **Single source (pass 3, research R8/R1)**: every transaction in the ledger is a `PatternMatch`. There is no hardcoded/ephemeral parse path, so each `smsId` has at most one `PatternMatch` → no duplicates by construction. `Transaction.source` is derived from `PatternMatch.senderId` (the `AccountSource` enum's parsing role is removed; accounts are discovered dynamically).
 
 ### SuppressedSender (`unmatched_sms.dart` or own file)
 | Field | Type | Required | Notes |
@@ -124,6 +126,13 @@ UnmatchedSms ── references inbox message by smsId (no body stored)
 - `PatternMatch.smsId` is unique → re-scan cannot create duplicates; overwrite requires user confirmation (FR-023, FR-039/40).
 - Multi-pattern resolution: try patterns for a sender in `createdAt` ascending order; first amount-resolving pattern wins (FR-034).
 - Orphan pruning: an `UnmatchedSmsRecord` whose `smsId` is absent from the current inbox scan is deleted (FR-042); its `PatternMatch`/Transaction, if any, is retained.
+- Unmatched classification (R8, pass 3): an SMS becomes an `UnmatchedSmsRecord` when no learned pattern matches **and** the sender is alphanumeric (R2) **and** the sender is not suppressed. There is no hardcoded-parser exception — every financial sender must be taught.
+
+## Dashboard count source (R9)
+The dashboard card reads `UnmatchedSmsRepository.activeCount()` (persisted from the previous scan) on launch for instant render, then refreshes after the background scan completes. The count is never blocked on a full scan.
+
+## Impact on the existing `Transaction` model (pass 3)
+`lib/domain/models/transaction.dart` currently types `source` as the `AccountSource` enum (`bankAlAhly`, `vfCash`). Going fully dynamic, `source` becomes a `String` sender identifier (or a lightweight `{ senderId, displayName }`), since accounts are no longer a fixed enumeration. Consumers of `AccountSource` (analytics, `SmsService.getFinancialSms`, transaction widgets) must be updated to the sender-string model. The hardcoded `SmsParser` is deleted. This is the largest existing-code change introduced by the feature and is captured as explicit tasks.
 
 ## Retention & growth (spec §Assumptions)
 - `UnmatchedSmsRecords` removed on match (→ PatternMatch) or dismiss (→ SuppressedSender); orphans pruned on scan. Bounded, no stale accumulation.
