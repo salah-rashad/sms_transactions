@@ -5,6 +5,7 @@ import 'package:sms_transactions/features/home/main_screen.dart';
 import 'package:sms_transactions/features/money_pool/money_pool_screen.dart';
 import 'package:sms_transactions/features/settings/settings_screen.dart';
 import 'package:sms_transactions/features/transactions/transactions_screen.dart';
+import 'package:sms_transactions/features/unmatched/unmatched_screen.dart';
 
 class AppRouter {
   const AppRouter._();
@@ -75,6 +76,10 @@ class AppRouter {
             initialRangeLabel: label,
           );
         },
+      ),
+      GoRoute(
+        path: '/unmatched',
+        builder: (context, state) => const UnmatchedScreen(),
       ),
     ],
   );

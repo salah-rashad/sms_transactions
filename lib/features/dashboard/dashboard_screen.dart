@@ -8,6 +8,7 @@ import 'package:sms_transactions/domain/analytics/salary_cycle_breakdown.dart';
 import 'package:sms_transactions/features/dashboard/widgets/monthly_summary_tile.dart';
 import 'package:sms_transactions/features/dashboard/widgets/salary_summary_tile.dart';
 import 'package:sms_transactions/features/dashboard/widgets/stats_card.dart';
+import 'package:sms_transactions/features/dashboard/widgets/unmatched_card.dart';
 import 'package:sms_transactions/features/money_pool/cubit/money_pool_cubit.dart';
 import 'package:sms_transactions/features/money_pool/cubit/money_pool_state.dart';
 import 'package:sms_transactions/features/transactions/cubit/transaction_cubit.dart';
@@ -88,6 +89,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     context.read<TransactionCubit>().loadTransactions(),
                 child: ListView(
                   children: [
+                    const UnmatchedCard(),
                     Padding(
                       padding: const EdgeInsets.all(12),
                       child: Row(

@@ -29,8 +29,8 @@ Single-project layered Flutter app. Paths are repo-relative, matching [plan.md](
 
 **Purpose**: Prepare directories and confirm codegen tooling for the Drift schema bump.
 
-- [ ] T001 Confirm `drift_dev` and `build_runner` are present under `dev_dependencies` in `pubspec.yaml` (needed to regenerate `app_database.g.dart` for schema v2); add if missing and run `flutter pub get`.
-- [ ] T002 [P] Create the new source/test directories: `lib/domain/sms/`, `lib/features/unmatched/cubit/`, `lib/features/unmatched/widgets/`, `lib/features/pattern_authoring/cubit/`, `lib/features/pattern_authoring/widgets/`, `lib/features/settings/cubit/`, `test/domain/sms/`.
+- [x] T001 Confirm `drift_dev` and `build_runner` are present under `dev_dependencies` in `pubspec.yaml` (needed to regenerate `app_database.g.dart` for schema v2); add if missing and run `flutter pub get`.
+- [x] T002 [P] Create the new source/test directories: `lib/domain/sms/`, `lib/features/unmatched/cubit/`, `lib/features/unmatched/widgets/`, `lib/features/pattern_authoring/cubit/`, `lib/features/pattern_authoring/widgets/`, `lib/features/settings/cubit/`, `test/domain/sms/`.
 
 ---
 
@@ -42,34 +42,34 @@ Single-project layered Flutter app. Paths are repo-relative, matching [plan.md](
 
 ### Domain models (plain Dart)
 
-- [ ] T003 [P] Create `SmsToken` value objects (`NumericToken`, `TextToken`) in `lib/domain/models/sms_token.dart` per [data-model.md](data-model.md).
-- [ ] T004 [P] Create `SmsPattern`, `FieldLocator`, and `SmsDirection` enum in `lib/domain/models/sms_pattern.dart`.
-- [ ] T005 [P] Create `UnmatchedSms` (with transient `body`) and `SuppressedSender` in `lib/domain/models/unmatched_sms.dart`.
-- [ ] T006 [P] Create `PatternMatch` (extracted values, `smsId` key, `senderId`) in `lib/domain/models/pattern_match.dart`.
+- [x] T003 [P] Create `SmsToken` value objects (`NumericToken`, `TextToken`) in `lib/domain/models/sms_token.dart` per [data-model.md](data-model.md).
+- [x] T004 [P] Create `SmsPattern`, `FieldLocator`, and `SmsDirection` enum in `lib/domain/models/sms_pattern.dart`.
+- [x] T005 [P] Create `UnmatchedSms` (with transient `body`) and `SuppressedSender` in `lib/domain/models/unmatched_sms.dart`.
+- [x] T006 [P] Create `PatternMatch` (extracted values, `smsId` key, `senderId`) in `lib/domain/models/pattern_match.dart`.
 
 ### Pure engine (domain) + its unit tests
 
-- [ ] T007 Implement `SmsTokenizer` (Latin + Arabic-Indic digits, separators, mixed LTR/RTL, non-transactional heuristic) in `lib/domain/sms/sms_tokenizer.dart` per [contracts/tokenizer.contract.md](contracts/tokenizer.contract.md) (depends on T003).
-- [ ] T008 [P] Write `SmsTokenizer` unit tests in `test/domain/sms/sms_tokenizer_test.dart` covering the contract's behavioral table (depends on T007).
-- [ ] T009 Implement `PatternMatcher` (`derivePattern`, `match`, `matchAny` with `\s+` tolerance and createdAt ordering) in `lib/domain/sms/pattern_matcher.dart` per [contracts/pattern-matcher.contract.md](contracts/pattern-matcher.contract.md) (depends on T004, T006, T007).
-- [ ] T010 [P] Write `PatternMatcher` unit tests in `test/domain/sms/pattern_matcher_test.dart`, including the derive→match round-trip on the example body (depends on T009).
+- [x] T007 Implement `SmsTokenizer` (Latin + Arabic-Indic digits, separators, mixed LTR/RTL, non-transactional heuristic) in `lib/domain/sms/sms_tokenizer.dart` per [contracts/tokenizer.contract.md](contracts/tokenizer.contract.md) (depends on T003).
+- [x] T008 [P] Write `SmsTokenizer` unit tests in `test/domain/sms/sms_tokenizer_test.dart` covering the contract's behavioral table (depends on T007).
+- [x] T009 Implement `PatternMatcher` (`derivePattern`, `match`, `matchAny` with `\s+` tolerance and createdAt ordering) in `lib/domain/sms/pattern_matcher.dart` per [contracts/pattern-matcher.contract.md](contracts/pattern-matcher.contract.md) (depends on T004, T006, T007).
+- [x] T010 [P] Write `PatternMatcher` unit tests in `test/domain/sms/pattern_matcher_test.dart`, including the derive→match round-trip on the example body (depends on T009).
 
 ### Persistence (Drift schema v2)
 
-- [ ] T011 Add `SmsPatterns`, `PatternMatches`, `UnmatchedSmsRecords`, `SuppressedSenders` tables, bump `schemaVersion` to 2, and add an additive `onUpgrade` migration in `lib/data/database/app_database.dart` per [data-model.md](data-model.md) (depends on T004–T006).
-- [ ] T012 Regenerate Drift code: run `dart run build_runner build --delete-conflicting-outputs` to update `lib/data/database/app_database.g.dart` (depends on T011).
+- [x] T011 Add `SmsPatterns`, `PatternMatches`, `UnmatchedSmsRecords`, `SuppressedSenders` tables, bump `schemaVersion` to 2, and add an additive `onUpgrade` migration in `lib/data/database/app_database.dart` per [data-model.md](data-model.md) (depends on T004–T006).
+- [x] T012 Regenerate Drift code: run `dart run build_runner build --delete-conflicting-outputs` to update `lib/data/database/app_database.g.dart` (depends on T011).
 
 ### Repositories (data ↔ domain mapping)
 
-- [ ] T013 [P] Implement `PatternRepository` and `PatternMatchRepository` in `lib/data/repositories/pattern_repository.dart` per [contracts/repositories.contract.md](contracts/repositories.contract.md) — includes `recordAttempt`, `getBySmsId`, `getAll`, `countForSender`, `nullifyPatternRef` (depends on T012).
-- [ ] T014 [P] Implement `UnmatchedSmsRepository` in `lib/data/repositories/unmatched_sms_repository.dart` (`getActive`, `activeCount`, `upsertAll`, `removeBySmsId`, `removeBySender`, `pruneMissing`) (depends on T012).
-- [ ] T015 [P] Implement `SuppressedSenderRepository` in `lib/data/repositories/suppressed_sender_repository.dart` (`getAll`, `suppress`, `unsuppress`) (depends on T012).
+- [x] T013 [P] Implement `PatternRepository` and `PatternMatchRepository` in `lib/data/repositories/pattern_repository.dart` per [contracts/repositories.contract.md](contracts/repositories.contract.md) — includes `recordAttempt`, `getBySmsId`, `getAll`, `countForSender`, `nullifyPatternRef` (depends on T012).
+- [x] T014 [P] Implement `UnmatchedSmsRepository` in `lib/data/repositories/unmatched_sms_repository.dart` (`getActive`, `activeCount`, `upsertAll`, `removeBySmsId`, `removeBySender`, `pruneMissing`) (depends on T012).
+- [x] T015 [P] Implement `SuppressedSenderRepository` in `lib/data/repositories/suppressed_sender_repository.dart` (`getAll`, `suppress`, `unsuppress`) (depends on T012).
 
 ### Scan orchestration (learned-pattern only)
 
-- [ ] T016 Replace `getFinancialSms()` with `getCandidateSms()` in `lib/data/services/sms_service.dart` — returns alphanumeric-sender SMS plus already-patterned senders (research R2); no hardcoded address list.
-- [ ] T017 Implement `SmsScanService.scan({overwrite})` in `lib/data/services/sms_scan_service.dart` — runs tokenize+`matchAny` in a `compute()` isolate, persists new `PatternMatches` (idempotent on `smsId`), upserts `UnmatchedSmsRecords` when no learned pattern matches and the sender is alphanumeric + not suppressed (no hardcoded-parser exception — FR-035, R8), prunes orphans, returns `ScanResult` with conflicts (research R3/R8; depends on T009, T013, T014, T015, T016).
-- [ ] T018 Register `PatternRepository`, `PatternMatchRepository`, `UnmatchedSmsRepository`, `SuppressedSenderRepository`, and `SmsScanService` as lazy singletons in `lib/di/injection.dart` (depends on T013–T017).
+- [x] T016 Replace `getFinancialSms()` with `getCandidateSms()` in `lib/data/services/sms_service.dart` — returns alphanumeric-sender SMS plus already-patterned senders (research R2); no hardcoded address list.
+- [x] T017 Implement `SmsScanService.scan({overwrite})` in `lib/data/services/sms_scan_service.dart` — runs tokenize+`matchAny` in a `compute()` isolate, persists new `PatternMatches` (idempotent on `smsId`), upserts `UnmatchedSmsRecords` when no learned pattern matches and the sender is alphanumeric + not suppressed (no hardcoded-parser exception — FR-035, R8), prunes orphans, returns `ScanResult` with conflicts (research R3/R8; depends on T009, T013, T014, T015, T016).
+- [x] T018 Register `PatternRepository`, `PatternMatchRepository`, `UnmatchedSmsRepository`, `SuppressedSenderRepository`, and `SmsScanService` as lazy singletons in `lib/di/injection.dart` (depends on T013–T017).
 
 **Checkpoint**: Engine ready — user stories can begin.
 
@@ -81,14 +81,14 @@ Single-project layered Flutter app. Paths are repo-relative, matching [plan.md](
 
 **Independent Test**: Seed an unmatched alphanumeric sender; launch app → card shows correct count within ~1s (cached); tap Review → grouped list appears; empty queue → no card (FR-001–007, SC-005).
 
-- [ ] T019 [P] [US1] Create `UnmatchedState` (items grouped by sender, count, status) in `lib/features/unmatched/cubit/unmatched_state.dart`.
-- [ ] T020 [US1] Implement `UnmatchedCubit` with `loadCachedCount()` (instant persisted `activeCount` for SC-005, research R9), `runLaunchScan()`, `refresh()`, `dismissSender()` in `lib/features/unmatched/cubit/unmatched_cubit.dart`, delegating to `SmsScanService` + repositories (depends on T019, T017, T014, T015).
-- [ ] T021 [P] [US1] Create `UnmatchedSenderGroup` list widget (sender header, message preview, timestamp, Teach/Dismiss actions) in `lib/features/unmatched/widgets/unmatched_sender_group.dart` (FR-005–007).
-- [ ] T022 [US1] Build `UnmatchedScreen` (lazy grouped list) in `lib/features/unmatched/unmatched_screen.dart` (depends on T020, T021).
-- [ ] T023 [P] [US1] Create `UnmatchedCard` (count + Review CTA, hidden when count==0) in `lib/features/dashboard/widgets/unmatched_card.dart` (FR-001–004).
-- [ ] T024 [US1] Insert `UnmatchedCard` at top of the dashboard list in `lib/features/dashboard/dashboard_screen.dart`, watching `UnmatchedCubit` (depends on T023, T020).
-- [ ] T025 [US1] Provide `UnmatchedCubit` app-scoped in `lib/app.dart`; on start call `loadCachedCount()` then `runLaunchScan()` (research R7/R9; depends on T020).
-- [ ] T026 [US1] Add `/unmatched` route (Review destination) in `lib/router/app_router.dart` and wire the card's Review CTA via `context.push` (depends on T022).
+- [x] T019 [P] [US1] Create `UnmatchedState` (items grouped by sender, count, status) in `lib/features/unmatched/cubit/unmatched_state.dart`.
+- [x] T020 [US1] Implement `UnmatchedCubit` with `loadCachedCount()` (instant persisted `activeCount` for SC-005, research R9), `runLaunchScan()`, `refresh()`, `dismissSender()` in `lib/features/unmatched/cubit/unmatched_cubit.dart`, delegating to `SmsScanService` + repositories (depends on T019, T017, T014, T015).
+- [x] T021 [P] [US1] Create `UnmatchedSenderGroup` list widget (sender header, message preview, timestamp, Teach/Dismiss actions) in `lib/features/unmatched/widgets/unmatched_sender_group.dart` (FR-005–007).
+- [x] T022 [US1] Build `UnmatchedScreen` (lazy grouped list) in `lib/features/unmatched/unmatched_screen.dart` (depends on T020, T021).
+- [x] T023 [P] [US1] Create `UnmatchedCard` (count + Review CTA, hidden when count==0) in `lib/features/dashboard/widgets/unmatched_card.dart` (FR-001–004).
+- [x] T024 [US1] Insert `UnmatchedCard` at top of the dashboard list in `lib/features/dashboard/dashboard_screen.dart`, watching `UnmatchedCubit` (depends on T023, T020).
+- [x] T025 [US1] Provide `UnmatchedCubit` app-scoped in `lib/app.dart`; on start call `loadCachedCount()` then `runLaunchScan()` (research R7/R9; depends on T020).
+- [x] T026 [US1] Add `/unmatched` route (Review destination) in `lib/router/app_router.dart` and wire the card's Review CTA via `context.push` (depends on T022).
 
 **Checkpoint**: US1 functions independently — dashboard card + review list driven by the launch scan.
 

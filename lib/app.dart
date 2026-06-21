@@ -5,6 +5,7 @@ import 'package:sms_transactions/di/injection.dart';
 import 'package:sms_transactions/features/money_pool/cubit/money_pool_cubit.dart';
 import 'package:sms_transactions/features/settings/cubit/theme_cubit.dart';
 import 'package:sms_transactions/features/transactions/cubit/transaction_cubit.dart';
+import 'package:sms_transactions/features/unmatched/cubit/unmatched_cubit.dart';
 import 'package:sms_transactions/router/app_router.dart';
 
 class App extends StatelessWidget {
@@ -19,6 +20,21 @@ class App extends StatelessWidget {
           create: (_) => TransactionCubit(getIt(), getIt())..loadTransactions(),
         ),
         BlocProvider(create: (_) => MoneyPoolCubit(getIt())..load()),
+        BlocProvider(
+          create: (_) {
+            final cubit = UnmatchedCubit(
+              scanService: getIt(),
+              unmatchedRepository: getIt(),
+              suppressedRepository: getIt(),
+            );
+            // R9/SC-005: render cached count instantly, then refresh after the
+            // background scan completes (FR-024).
+            cubit
+              ..loadCachedCount()
+              ..runLaunchScan();
+            return cubit;
+          },
+        ),
       ],
       child: BlocBuilder<ThemeCubit, ThemeMode>(
         builder: (context, themeMode) {
