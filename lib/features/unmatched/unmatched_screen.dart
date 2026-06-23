@@ -15,7 +15,38 @@ class UnmatchedScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Unmatched Messages')),
+      appBar: AppBar(
+        title: BlocBuilder<UnmatchedCubit, UnmatchedState>(
+          buildWhen: (a, b) => a.count != b.count,
+          builder: (context, state) => Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('Unmatched Messages'),
+              if (state.count > 0) ...[
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: context.colorScheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    '${state.count}',
+                    style: TextStyle(
+                      color: context.colorScheme.onPrimaryContainer,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
       body: BlocBuilder<UnmatchedCubit, UnmatchedState>(
         builder: (context, state) {
           if (state.hasError) {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sms_transactions/core/extensions/build_context.dart';
+import 'package:sms_transactions/core/utils/logger.dart';
 import 'package:sms_transactions/domain/models/sms_pattern.dart';
 import 'package:sms_transactions/features/pattern_authoring/cubit/pattern_authoring_cubit.dart';
 import 'package:sms_transactions/features/pattern_authoring/cubit/pattern_authoring_state.dart';
@@ -32,8 +33,10 @@ class PatternAuthoringScreen extends StatelessWidget {
           context.read<UnmatchedCubit>().refresh();
           final next = state.autoNextSms;
           if (next != null) {
+            Logger.data('Authoring.nav', 'auto-next SMS=${next.smsId}', emoji: '🚀');
             context.pushReplacement('/unmatched/teach', extra: next);
           } else {
+            Logger.data('Authoring.nav', 'queue empty → pop', emoji: '👈');
             context.pop();
           }
           return;

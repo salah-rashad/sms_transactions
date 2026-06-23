@@ -33,6 +33,14 @@ class PatternAuthoringCubit extends Cubit<PatternAuthoringState> {
     required this.scanService,
   })  : _matcher = matcher ?? PatternMatcher(),
         super(_initialState(source, editing)) {
+    Logger.data(
+      'Authoring.boot',
+      'mode=${editing == null ? "create" : "edit"} '
+          'smsId=${source.smsId} sender=${source.senderId} '
+          'numeric=${state.numericTokens.length} '
+          'text=${state.textTokens.length}',
+      emoji: '🚀',
+    );
     _initFromEditing();
   }
 
@@ -71,6 +79,13 @@ class PatternAuthoringCubit extends Cubit<PatternAuthoringState> {
       direction: editing.direction,
       counterpartyTokens: cpTokens,
       counterparty: merged,
+    );
+    Logger.data(
+      'Authoring.preload',
+      'dir=${editing.direction} amount=${amount != null} '
+          'balance=${balance != null} counterparty=${cpTokens.length} '
+          '→ landing@summary',
+      emoji: '📥',
     );
     emit(withDirection.copyWith(
       stepIndex: withDirection.activeSteps.length - 1,
@@ -127,15 +142,27 @@ class PatternAuthoringCubit extends Cubit<PatternAuthoringState> {
   /// Step 0: classify the message. Picking a direction recomputes the active
   /// step plan, so we always advance to step 1 of the new plan.
   void selectDirection(SmsDirection d) {
+    Logger.data('Authoring.direction', '$d selected', emoji: '👉');
     // If switching from a direction whose primary value step was "balance" /
     // "counterparty" back to one needing amount, the previous selection may
     // no longer fit — keep it for now, the user can re-pick.
     emit(state.copyWith(direction: d, stepIndex: 1));
+    Logger.data(
+      'Authoring.plan',
+      state.activeSteps.map((s) => s.name).join(' → '),
+      emoji: '🧭',
+    );
     _recomputePreview();
   }
 
   /// Amount step (income/expense only).
   void selectAmount(NumericToken t) {
+    Logger.data(
+      'Authoring.amount',
+      '${t.rawText} → ${t.normalizedValue} '
+          '(before="${t.beforeWord}" after="${t.afterWord}")',
+      emoji: '👉',
+    );
     emit(state.copyWith(amount: t, stepIndex: state.stepIndex + 1));
     _recomputePreview();
   }
@@ -143,6 +170,16 @@ class PatternAuthoringCubit extends Cubit<PatternAuthoringState> {
   /// Balance step. Required for balanceCheck; optional for income/expense.
   /// Null = skip (only valid when optional).
   void selectBalance(NumericToken? t) {
+    if (t == null) {
+      Logger.data('Authoring.balance', 'skipped (optional)', emoji: '⏭️');
+    } else {
+      Logger.data(
+        'Authoring.balance',
+        '${t.rawText} → ${t.normalizedValue} '
+            '(before="${t.beforeWord}" after="${t.afterWord}")',
+        emoji: '👉',
+      );
+    }
     emit(state.copyWith(
       balance: t,
       clearBalance: t == null,
@@ -159,14 +196,18 @@ class PatternAuthoringCubit extends Cubit<PatternAuthoringState> {
     if (idx < 0) return;
 
     var selected = [...state.counterpartyTokens];
+    var action = 'add';
     if (selected.contains(t)) {
       if (t == selected.first || t == selected.last) {
         selected.remove(t);
+        action = 'shrink';
       } else {
         selected = [t];
+        action = 'restart';
       }
     } else if (selected.isEmpty) {
       selected = [t];
+      action = 'first';
     } else {
       final selectedIndices = selected
           .map((s) => allTokens.indexOf(s))
@@ -176,12 +217,20 @@ class PatternAuthoringCubit extends Cubit<PatternAuthoringState> {
       final hi = selectedIndices.last;
       if (idx == lo - 1 || idx == hi + 1) {
         selected.add(t);
+        action = 'extend';
       } else {
         selected = [t];
+        action = 'restart';
       }
     }
 
     final merged = selected.isNotEmpty ? TextToken.merge(selected) : null;
+    Logger.data(
+      'Authoring.counterparty',
+      '$action "${t.rawText}" → ${selected.length} selected'
+          '${merged != null ? ' (="${merged.rawText}")' : ''}',
+      emoji: '👉',
+    );
     emit(state.copyWith(
       counterpartyTokens: selected,
       counterparty: merged,
@@ -193,6 +242,12 @@ class PatternAuthoringCubit extends Cubit<PatternAuthoringState> {
   /// Confirm the counterparty step (also used to advance from an empty
   /// selection in income/expense + balanceCheck flows, where it's optional).
   void confirmCounterparty() {
+    Logger.data(
+      'Authoring.confirm',
+      '${state.counterpartyTokens.length} token(s)'
+          '${state.counterparty != null ? ' ="${state.counterparty!.rawText}"' : ''}',
+      emoji: '✅',
+    );
     emit(state.copyWith(stepIndex: state.stepIndex + 1));
   }
 
@@ -200,6 +255,7 @@ class PatternAuthoringCubit extends Cubit<PatternAuthoringState> {
   /// patterns where counterparty IS the identifier — the UI hides the skip
   /// button in that case.
   void skipCounterparty() {
+    Logger.data('Authoring.skipCounterparty', 'skipped (optional)', emoji: '⏭️');
     emit(state.copyWith(
       clearCounterparty: true,
       stepIndex: state.stepIndex + 1,
@@ -210,6 +266,12 @@ class PatternAuthoringCubit extends Cubit<PatternAuthoringState> {
   /// Decrement the step without clearing later selections (FR-013).
   void back() {
     if (state.stepIndex > 0) {
+      Logger.data(
+        'Authoring.back',
+        'step ${state.stepIndex} → ${state.stepIndex - 1} '
+            '(selections preserved)',
+        emoji: '👈',
+      );
       emit(state.copyWith(stepIndex: state.stepIndex - 1));
     }
   }
@@ -217,10 +279,16 @@ class PatternAuthoringCubit extends Cubit<PatternAuthoringState> {
   void _recomputePreview() {
     final s = state;
     if (s.direction == null) {
+      Logger.gray('no direction yet — preview cleared',
+          name: 'Authoring.preview');
       emit(s.copyWith(clearPreview: true));
       return;
     }
     if (!_hasRequiredFieldsForDirection(s)) {
+      Logger.gray(
+        'required field missing for ${s.direction} — preview cleared',
+        name: 'Authoring.preview',
+      );
       emit(s.copyWith(clearPreview: true));
       return;
     }
@@ -237,6 +305,14 @@ class PatternAuthoringCubit extends Cubit<PatternAuthoringState> {
     );
     final preview =
         _matcher.match(pattern, s.source.smsId, body, s.source.receivedAt);
+    Logger.data(
+      'Authoring.preview',
+      preview != null
+          ? 'OK amount=${preview.amount} balance=${preview.balance} '
+              'cp="${preview.counterparty}"'
+          : 'NULL (round-trip match failed)',
+      emoji: '🧮',
+    );
     emit(s.copyWith(preview: preview));
   }
 
@@ -256,14 +332,25 @@ class PatternAuthoringCubit extends Cubit<PatternAuthoringState> {
 
   Future<void> save() async {
     final s = state;
-    if (s.direction == null) return;
-    if (!_hasRequiredFieldsForDirection(s)) return;
+    if (s.direction == null || !_hasRequiredFieldsForDirection(s)) {
+      Logger.gray('save skipped — preconditions not met',
+          name: 'Authoring.save');
+      return;
+    }
 
+    final isEdit = s.editing != null;
+    Logger.green(
+      'dir=${s.direction} edit=$isEdit'
+      '${s.amount != null ? ' amount=${s.amount!.normalizedValue}' : ''}'
+      '${s.balance != null ? ' balance=${s.balance!.normalizedValue}' : ''}'
+      '${s.counterparty != null ? ' cp="${s.counterparty!.rawText}"' : ''}',
+      name: 'Authoring.save.start',
+      emoji: '💾',
+    );
     emit(s.copyWith(status: PatternAuthoringStatus.saving, clearError: true));
     try {
       final body = s.source.body ?? '';
       final now = DateTime.now();
-      final isEdit = s.editing != null;
       final patternId =
           s.editing?.id ?? 'pattern-${now.microsecondsSinceEpoch}';
       final createdAt = s.editing?.createdAt ?? now;
@@ -285,6 +372,7 @@ class PatternAuthoringCubit extends Cubit<PatternAuthoringState> {
         lastMatchedAt: s.editing?.lastMatchedAt,
       );
       await patternRepository.upsert(pattern);
+      Logger.data('Authoring.save.pattern', '$patternId upserted', emoji: '💾');
 
       // Ignore-direction patterns don't produce ledger entries — they just
       // dismiss the SMS. For income/expense/balanceCheck we parse the example
@@ -298,13 +386,23 @@ class PatternAuthoringCubit extends Cubit<PatternAuthoringState> {
         );
         if (match != null) {
           await patternMatchRepository.upsert(match);
+          Logger.data(
+            'Authoring.save.match',
+            'persisted PatternMatch amount=${match.amount}'
+                ' balance=${match.balance} cp="${match.counterparty}"',
+            emoji: '💾',
+          );
           if (!isEdit) {
             await patternRepository.recordAttempt(
               patternId,
               success: true,
               matchedAt: match.matchedAt,
             );
+            Logger.data(
+              'Authoring.save.confidence', '+1 success', emoji: '💾');
           }
+        } else {
+          Logger.gray('match round-trip returned null', name: 'Authoring.save');
         }
       } else if (!isEdit) {
         // Ignore: count the teaching example as a successful match for
@@ -314,10 +412,13 @@ class PatternAuthoringCubit extends Cubit<PatternAuthoringState> {
           success: true,
           matchedAt: now,
         );
+        Logger.data(
+          'Authoring.save.confidence', '+1 success (ignore)', emoji: '💾');
       }
 
       // Drop the teaching SMS from the queue (always).
       await unmatchedSmsRepository.removeBySmsId(s.source.smsId);
+      Logger.data('Authoring.save.dequeue', s.source.smsId, emoji: '🗑️');
 
       // Re-match other still-unmatched SMS from the same sender against the
       // newly-saved pattern (and any siblings). Pass our in-memory body for
@@ -334,6 +435,12 @@ class PatternAuthoringCubit extends Cubit<PatternAuthoringState> {
       // one so the wizard auto-launches into it.
       final autoNext = remaining.isEmpty ? null : remaining.first;
 
+      Logger.green(
+        'saved — ${remaining.length} still unmatched for sender'
+        '${autoNext != null ? ' → autoNext=${autoNext.smsId}' : ' → pop'}',
+        name: 'Authoring.save.done',
+        emoji: '✅',
+      );
       emit(state.copyWith(
         status: PatternAuthoringStatus.saved,
         autoNextSms: autoNext,
@@ -341,7 +448,7 @@ class PatternAuthoringCubit extends Cubit<PatternAuthoringState> {
         clearError: true,
       ));
     } catch (e, st) {
-      Logger.error('PatternAuthoringCubit.save', e, st);
+      Logger.error('Authoring.save.error', e, st);
       emit(state.copyWith(
         status: PatternAuthoringStatus.error,
         error: e.toString(),

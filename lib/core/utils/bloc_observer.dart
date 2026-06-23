@@ -6,7 +6,13 @@ class AppBlocObserver extends BlocObserver {
   @override
   void onCreate(BlocBase<dynamic> bloc) {
     super.onCreate(bloc);
-    Logger.green(name: "${bloc.runtimeType}", "", emoji: '+');
+    Logger.green(name: "${bloc.runtimeType}", "CREATED", emoji: '❇️');
+  }
+
+  @override
+  void onClose(BlocBase<dynamic> bloc) {
+    super.onClose(bloc);
+    Logger.red(name: "${bloc.runtimeType}", "CLOSED", emoji: '🔥');
   }
 
   @override
@@ -20,9 +26,9 @@ class AppBlocObserver extends BlocObserver {
     super.onChange(bloc, change);
     final message =
         '⚡ '
-        '[ ${change.currentState.runtimeType} ]'
+        '[ ${change.currentState} ]'
         ' ⇨ '
-        '[ ${change.nextState.runtimeType} ]';
+        '[ ${change.nextState} ]';
     Logger.gray(name: "${bloc.runtimeType}", message);
   }
 

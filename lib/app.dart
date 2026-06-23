@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sms_transactions/core/theme/app_theme.dart';
+import 'package:sms_transactions/core/utils/logger.dart';
 import 'package:sms_transactions/di/injection.dart';
 import 'package:sms_transactions/features/money_pool/cubit/money_pool_cubit.dart';
 import 'package:sms_transactions/features/settings/cubit/theme_cubit.dart';
@@ -29,6 +30,8 @@ class App extends StatelessWidget {
             );
             // R9/SC-005: render cached count instantly, then refresh after the
             // background scan completes (FR-024).
+            Logger.green('app started — loading cached count + launch scan',
+                name: 'App.launch', emoji: '🚀');
             cubit
               ..loadCachedCount()
               ..runLaunchScan();

@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:sms_transactions/core/utils/logger.dart';
 import 'package:sms_transactions/data/repositories/pattern_repository.dart';
 import 'package:sms_transactions/data/repositories/suppressed_sender_repository.dart';
 import 'package:sms_transactions/data/repositories/unmatched_sms_repository.dart';
@@ -60,14 +61,21 @@ class SmsScanService {
   Future<ScanResult> scan({bool overwrite = false}) async {
     final granted = await smsService.requestPermission();
     if (!granted) {
+      Logger.gray('permission denied — aborting', name: 'Scan.start');
       return const ScanResult(newMatches: 0, unmatchedCount: 0);
     }
 
     final patterns = await patternRepository.getAll();
     final patternedSenders = patterns.map((p) => p.senderId).toSet();
     final suppressed = await suppressedSenderRepository.getAll();
+    Logger.data(
+      'Scan.start',
+      'patterns=${patterns.length} suppressed=${suppressed.length}',
+      emoji: '🔍',
+    );
 
     final messages = await smsService.getCandidateSms(patternedSenders);
+    Logger.data('Scan.inbox', '${messages.length} candidate SMS', emoji: '🔍');
 
     // Build the isolate input (plain sendable payloads). Cache bodies in-memory
     // for display + authoring (never persisted — privacy I).
@@ -87,7 +95,17 @@ class SmsScanService {
     }
 
     // Heavy matching runs off the main isolate (R3).
+    Logger.data(
+      'Scan.isolate',
+      'matching ${smsInputs.length} SMS × ${patterns.length} patterns...',
+      emoji: '🔍',
+    );
     final matched = await compute(_runMatching, _IsolateInput(smsInputs, patterns));
+    Logger.data(
+      'Scan.isolate',
+      '${matched.matches.length} matched, ${matched.unmatched.length} unmatched',
+      emoji: '🔍',
+    );
 
     final existingBySmsId = <String, PatternMatch>{};
     for (final m in await patternMatchRepository.getAll()) {
@@ -138,6 +156,12 @@ class SmsScanService {
       newMatches += 1;
     }
 
+    Logger.data(
+      'Scan.persist',
+      'newMatches=$newMatches conflicts=${conflicts.length}',
+      emoji: '💾',
+    );
+
     // Unmatched routing (R2/R8 pass 3, FR-035): alphanumeric + non-suppressed.
     final unmatchedToPersist = <UnmatchedSms>[];
     for (final sms in matched.unmatched) {
@@ -169,17 +193,29 @@ class SmsScanService {
     }
 
     await unmatchedSmsRepository.upsertAll(unmatchedToPersist);
+    Logger.data(
+      'Scan.unmatched',
+      '${unmatchedToPersist.length} upserted',
+      emoji: '♻️',
+    );
 
     // Orphan prune (FR-042): drop unmatched records for smsIds no longer present.
     final presentIds = <String>{for (final s in smsInputs) s.id};
     await unmatchedSmsRepository.pruneMissing(presentIds);
 
     final finalCount = await unmatchedSmsRepository.activeCount();
-    return ScanResult(
+    final result = ScanResult(
       newMatches: newMatches,
       unmatchedCount: finalCount,
       conflicts: conflicts,
     );
+    Logger.green(
+      'new=${result.newMatches} unmatched=${result.unmatchedCount} '
+      'conflicts=${result.conflicts.length}',
+      name: 'Scan.done',
+      emoji: '✅',
+    );
+    return result;
   }
 
   /// After a user teaches/edits a pattern, apply ALL patterns for [senderId]
@@ -198,10 +234,24 @@ class SmsScanService {
     final unmatched = (await unmatchedSmsRepository.getActive())
         .where((u) => u.senderId == senderId)
         .toList();
+    Logger.data(
+      'Scan.rematch',
+      'sender=$senderId active=${unmatched.length}',
+      emoji: '♻️',
+    );
     if (unmatched.isEmpty) return const [];
 
     final patterns = await patternRepository.getForSender(senderId);
-    if (patterns.isEmpty) return unmatched;
+    if (patterns.isEmpty) {
+      Logger.gray('no patterns for sender — returning all unmatched',
+          name: 'Scan.rematch');
+      return unmatched;
+    }
+    Logger.data(
+      'Scan.rematch',
+      '${patterns.length} patterns to apply',
+      emoji: '♻️',
+    );
 
     final smsInputs = <_SmsInput>[];
     final remaining = <UnmatchedSms>[];
@@ -224,6 +274,11 @@ class SmsScanService {
 
     final result =
         await compute(_runMatching, _IsolateInput(smsInputs, patterns));
+    Logger.data(
+      'Scan.rematch',
+      '${result.matches.length}/${smsInputs.length} re-matched',
+      emoji: '🔍',
+    );
 
     final matchedIds = <String>{};
     for (final match in result.matches) {
@@ -247,6 +302,11 @@ class SmsScanService {
         remaining.add(u);
       }
     }
+    Logger.data(
+      'Scan.rematch.done',
+      '${remaining.length} still unmatched for sender',
+      emoji: '✅',
+    );
     return remaining;
   }
 }

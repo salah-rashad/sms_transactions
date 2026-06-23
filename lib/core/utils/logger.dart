@@ -43,10 +43,6 @@ enum Logger {
   static void _log(String key, String value, String? emoji) {
     emoji ??= ' ';
 
-    if (emoji.trim().isNotEmpty) {
-      emoji = ' $emoji';
-    }
-
     emoji = ' ${emoji.padRight(4)}';
 
     key = '$emoji[$key]:'.padRightVisible(22);

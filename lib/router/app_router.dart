@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:sms_transactions/core/utils/logger.dart';
 import 'package:sms_transactions/data/repositories/pattern_repository.dart';
 import 'package:sms_transactions/data/repositories/unmatched_sms_repository.dart';
 import 'package:sms_transactions/data/services/sms_scan_service.dart';
@@ -110,14 +111,22 @@ class AppRouter {
               }
 
               return BlocProvider(
-                create: (_) => PatternAuthoringCubit(
-                  source: source,
-                  editing: editing,
-                  patternRepository: getIt<PatternRepository>(),
-                  patternMatchRepository: getIt<PatternMatchRepository>(),
-                  unmatchedSmsRepository: getIt<UnmatchedSmsRepository>(),
-                  scanService: getIt<SmsScanService>(),
-                ),
+                create: (_) {
+                  Logger.data(
+                    'Route.teach',
+                    'mode=${editing == null ? "create" : "edit"} '
+                        'sms=${source.smsId} sender=${source.senderId}',
+                    emoji: '🚀',
+                  );
+                  return PatternAuthoringCubit(
+                    source: source,
+                    editing: editing,
+                    patternRepository: getIt<PatternRepository>(),
+                    patternMatchRepository: getIt<PatternMatchRepository>(),
+                    unmatchedSmsRepository: getIt<UnmatchedSmsRepository>(),
+                    scanService: getIt<SmsScanService>(),
+                  );
+                },
                 child: const PatternAuthoringScreen(),
               );
             },

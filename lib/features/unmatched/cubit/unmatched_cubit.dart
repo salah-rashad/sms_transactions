@@ -29,6 +29,7 @@ class UnmatchedCubit extends Cubit<UnmatchedState> {
     try {
       final cached = await unmatchedRepository.activeCount();
       emit(state.copyWith(count: cached));
+      Logger.data('Unmatched.count', 'cached=$cached', emoji: '📥');
     } catch (e, st) {
       Logger.error('UnmatchedCubit.loadCachedCount', e, st);
     }
@@ -36,10 +37,14 @@ class UnmatchedCubit extends Cubit<UnmatchedState> {
 
   /// FR-024: runs the background scan and refreshes the queue + count.
   Future<void> runLaunchScan() async {
+    Logger.green('launching background scan...',
+        name: 'Unmatched.scan', emoji: '🔍');
     emit(state.copyWith(status: UnmatchedStatus.scanning, clearError: true));
     try {
       await scanService.scan();
       await _reloadItems();
+      Logger.green('launch scan done — ${state.count} unmatched',
+          name: 'Unmatched.scan', emoji: '✅');
     } catch (e, st) {
       Logger.error('UnmatchedCubit.runLaunchScan', e, st);
       emit(state.copyWith(status: UnmatchedStatus.error, error: e.toString()));
@@ -47,10 +52,14 @@ class UnmatchedCubit extends Cubit<UnmatchedState> {
   }
 
   /// Reloads items + count from persistence (no inbox scan).
-  Future<void> refresh() async => _reloadItems();
+  Future<void> refresh() async {
+    Logger.gray('refresh requested', name: 'Unmatched.refresh');
+    await _reloadItems();
+  }
 
   /// US3 / FR-017: suppress the sender and drop its queue entries.
   Future<void> dismissSender(String senderId) async {
+    Logger.data('Unmatched.dismiss', senderId, emoji: '🗑️');
     await suppressedRepository.suppress(senderId);
     await unmatchedRepository.removeBySender(senderId);
     await _reloadItems();
@@ -74,6 +83,7 @@ class UnmatchedCubit extends Cubit<UnmatchedState> {
           clearError: true,
         ),
       );
+      Logger.data('Unmatched.reload', '$count items', emoji: '♻️');
     } catch (e, st) {
       Logger.error('UnmatchedCubit._reloadItems', e, st);
       emit(state.copyWith(status: UnmatchedStatus.error, error: e.toString()));
