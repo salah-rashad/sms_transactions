@@ -27,12 +27,13 @@ class PatternAuthoringCubit extends Cubit<PatternAuthoringState> {
     required UnmatchedSms source,
     SmsPattern? editing,
     PatternMatcher? matcher,
+    Set<String> deferredIds = const {},
     required this.patternRepository,
     required this.patternMatchRepository,
     required this.unmatchedSmsRepository,
     required this.scanService,
   })  : _matcher = matcher ?? PatternMatcher(),
-        super(_initialState(source, editing)) {
+        super(_initialState(source, editing, deferredIds)) {
     Logger.data(
       'Authoring.boot',
       'mode=${editing == null ? "create" : "edit"} '
@@ -42,6 +43,7 @@ class PatternAuthoringCubit extends Cubit<PatternAuthoringState> {
       emoji: '🚀',
     );
     _initFromEditing();
+    _loadSenderQueue();
   }
 
   final PatternMatcher _matcher;
@@ -51,12 +53,13 @@ class PatternAuthoringCubit extends Cubit<PatternAuthoringState> {
   final SmsScanService scanService;
 
   static PatternAuthoringState _initialState(
-      UnmatchedSms source, SmsPattern? editing) {
+      UnmatchedSms source, SmsPattern? editing, Set<String> deferredIds) {
     final body = source.body ?? '';
     final tokenizer = SmsTokenizer();
     return PatternAuthoringState(
       source: source,
       editing: editing,
+      deferredIds: deferredIds,
       numericTokens: tokenizer.numericTokens(body),
       textTokens: tokenizer.textTokens(body),
     );
@@ -274,6 +277,57 @@ class PatternAuthoringCubit extends Cubit<PatternAuthoringState> {
       );
       emit(state.copyWith(stepIndex: state.stepIndex - 1));
     }
+  }
+
+  /// Load other unmatched SMS from the same sender so the direction step can
+  /// offer "Skip this message". Ordered non-deferred-first (newest-first within
+  /// each group) so deferred messages sink to the end of the session queue.
+  /// Bodies are enriched from the scan cache (transient — never persisted).
+  Future<void> _loadSenderQueue() async {
+    final all = await unmatchedSmsRepository.getActive();
+    final others = all
+        .where((u) =>
+            u.senderId == state.source.senderId &&
+            u.smsId != state.source.smsId)
+        .map((u) => u.copyWith(body: u.body ?? scanService.bodyFor(u.smsId)))
+        .toList()
+      ..sort((a, b) => b.receivedAt.compareTo(a.receivedAt));
+    final live =
+        others.where((u) => !state.deferredIds.contains(u.smsId)).toList();
+    final deferred =
+        others.where((u) => state.deferredIds.contains(u.smsId)).toList();
+    final queue = [...live, ...deferred];
+    Logger.data(
+      'Authoring.queue',
+      '${queue.length} other(s) for sender '
+          '(live=${live.length} deferred=${deferred.length})',
+      emoji: '🧭',
+    );
+    emit(state.copyWith(senderQueue: queue));
+  }
+
+  /// Skip the current SMS and navigate to the next non-deferred same-sender
+  /// message. The current smsId is added to [PatternAuthoringState.deferredIds]
+  /// so it sinks to last for the rest of the session (session-only — nothing is
+  /// persisted; the message stays in the unmatched queue).
+  void skipToNext() {
+    final target = state.senderQueue
+        .firstWhere(
+          (u) => !state.deferredIds.contains(u.smsId),
+          orElse: () => state.source,
+        );
+    if (target.smsId == state.source.smsId) return;
+    final newDeferred = {...state.deferredIds, state.source.smsId};
+    Logger.data(
+      'Authoring.skip',
+      '${state.source.smsId} → ${target.smsId} '
+          '(deferred=${newDeferred.length})',
+      emoji: '⏭️',
+    );
+    emit(state.copyWith(
+      skipNextSms: target,
+      deferredIds: newDeferred,
+    ));
   }
 
   void _recomputePreview() {

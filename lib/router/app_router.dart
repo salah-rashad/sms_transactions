@@ -98,9 +98,14 @@ class AppRouter {
               final extra = state.extra;
               final UnmatchedSms source;
               SmsPattern? editing;
+              Set<String> deferredIds = <String>{};
 
               if (extra is UnmatchedSms) {
                 source = extra;
+              } else if (extra
+                  is ({UnmatchedSms sms, Set<String> deferredIds})) {
+                source = extra.sms;
+                deferredIds = extra.deferredIds;
               } else if (extra is ({UnmatchedSms sms, SmsPattern pattern})) {
                 source = extra.sms;
                 editing = extra.pattern;
@@ -115,12 +120,14 @@ class AppRouter {
                   Logger.data(
                     'Route.teach',
                     'mode=${editing == null ? "create" : "edit"} '
-                        'sms=${source.smsId} sender=${source.senderId}',
+                        'sms=${source.smsId} sender=${source.senderId}'
+                        '${deferredIds.isNotEmpty ? ' deferred=${deferredIds.length}' : ''}',
                     emoji: '🚀',
                   );
                   return PatternAuthoringCubit(
                     source: source,
                     editing: editing,
+                    deferredIds: deferredIds,
                     patternRepository: getIt<PatternRepository>(),
                     patternMatchRepository: getIt<PatternMatchRepository>(),
                     unmatchedSmsRepository: getIt<UnmatchedSmsRepository>(),

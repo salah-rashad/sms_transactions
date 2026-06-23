@@ -26,7 +26,9 @@ class PatternAuthoringScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocListener<PatternAuthoringCubit, PatternAuthoringState>(
       listenWhen: (a, b) =>
-          a.isSaved != b.isSaved || (b.hasError && b.error != a.error),
+          a.isSaved != b.isSaved ||
+          a.skipNextSms != b.skipNextSms ||
+          (b.hasError && b.error != a.error),
       listener: (context, state) {
         if (state.isSaved) {
           // Refresh the unmatched queue → if there's a next SMS waiting from
@@ -44,6 +46,18 @@ class PatternAuthoringScreen extends StatelessWidget {
             Logger.data('Authoring.nav', 'queue empty → pop', emoji: '👈');
             context.pop();
           }
+          return;
+        }
+        if (state.skipNextSms != null) {
+          // Skip flow: defer the current SMS to the end of the session queue
+          // (deferredIds) and launch into the next non-deferred same-sender
+          // message. No queue mutation — the current SMS stays unmatched.
+          final next = state.skipNextSms!;
+          Logger.data('Authoring.nav', 'skip → SMS=${next.smsId}', emoji: '⏭️');
+          context.pushReplacement(
+            '/unmatched/teach',
+            extra: (sms: next, deferredIds: state.deferredIds),
+          );
           return;
         }
         if (state.hasError) {
@@ -195,13 +209,24 @@ class _Footer extends StatelessWidget {
           a.direction != b.direction ||
           a.isSaving != b.isSaving ||
           a.status != b.status ||
-          a.counterpartyTokens != b.counterpartyTokens,
+          a.counterpartyTokens != b.counterpartyTokens ||
+          a.canSkip != b.canSkip,
       builder: (context, state) {
         final cubit = context.read<PatternAuthoringCubit>();
         switch (state.currentStep) {
           case AuthoringStep.direction:
-            // Direction tiles advance on tap; no footer action.
-            return const SizedBox.shrink();
+            // Direction tiles advance on tap. Offer "Skip this message" only
+            // when another non-deferred same-sender SMS is waiting, so the user
+            // can defer a poor example and try a better one (session-only).
+            if (!state.canSkip) return const SizedBox.shrink();
+            return Padding(
+              padding: const EdgeInsets.all(16),
+              child: TextButton.icon(
+                onPressed: cubit.skipToNext,
+                icon: const Icon(Icons.skip_next),
+                label: const Text('Skip this message'),
+              ),
+            );
           case AuthoringStep.amount:
             return const SizedBox.shrink();
           case AuthoringStep.balance:

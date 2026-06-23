@@ -33,6 +33,19 @@ class PatternAuthoringState {
   /// the sender's queue is empty after re-matching.
   final UnmatchedSms? autoNextSms;
 
+  /// SmsIds deferred via "Skip this message" this session (session-only;
+  /// carried through the skip navigation, never persisted). Excluded from the
+  /// live skip target so skipped messages sink to the end of the teaching queue
+  /// until the user exits the wizard.
+  final Set<String> deferredIds;
+
+  /// Other unmatched SMS from the same sender, newest-first, with bodies
+  /// enriched from the scan cache. Loaded async on init; empty until then.
+  final List<UnmatchedSms> senderQueue;
+
+  /// When non-null, signals the screen to navigate to the next SMS (skip flow).
+  final UnmatchedSms? skipNextSms;
+
   final PatternAuthoringStatus status;
   final String? error;
 
@@ -49,6 +62,9 @@ class PatternAuthoringState {
     this.counterparty,
     this.preview,
     this.autoNextSms,
+    this.deferredIds = const {},
+    this.senderQueue = const [],
+    this.skipNextSms,
     this.status = PatternAuthoringStatus.editing,
     this.error,
   });
@@ -59,6 +75,11 @@ class PatternAuthoringState {
   bool get isSaving => status == PatternAuthoringStatus.saving;
   bool get isSaved => status == PatternAuthoringStatus.saved;
   bool get hasError => status == PatternAuthoringStatus.error;
+
+  /// Whether "Skip this message" is available: at least one other same-sender
+  /// SMS that has NOT already been deferred this session.
+  bool get canSkip =>
+      senderQueue.any((u) => !deferredIds.contains(u.smsId));
 
   /// The sequence of steps the wizard shows for the currently-selected
   /// direction. Direction is step 0; once it's chosen, the primary value step
@@ -139,6 +160,9 @@ class PatternAuthoringState {
     TextToken? counterparty,
     PatternMatch? preview,
     UnmatchedSms? autoNextSms,
+    Set<String>? deferredIds,
+    List<UnmatchedSms>? senderQueue,
+    UnmatchedSms? skipNextSms,
     PatternAuthoringStatus? status,
     String? error,
     bool clearAmount = false,
@@ -147,6 +171,7 @@ class PatternAuthoringState {
     bool clearCounterparty = false,
     bool clearPreview = false,
     bool clearAutoNext = false,
+    bool clearSkipNext = false,
     bool clearError = false,
   }) {
     final resolvedTokens = clearCounterparty
@@ -167,6 +192,9 @@ class PatternAuthoringState {
           : (counterparty ?? this.counterparty),
       preview: clearPreview ? null : (preview ?? this.preview),
       autoNextSms: clearAutoNext ? null : (autoNextSms ?? this.autoNextSms),
+      deferredIds: deferredIds ?? this.deferredIds,
+      senderQueue: senderQueue ?? this.senderQueue,
+      skipNextSms: clearSkipNext ? null : (skipNextSms ?? this.skipNextSms),
       status: status ?? this.status,
       error: clearError ? null : error ?? this.error,
     );
