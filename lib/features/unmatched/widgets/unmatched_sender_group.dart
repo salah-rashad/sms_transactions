@@ -3,6 +3,8 @@ import 'package:intl/intl.dart';
 import 'package:sms_transactions/core/extensions/build_context.dart';
 import 'package:sms_transactions/domain/models/unmatched_sms.dart';
 
+import '../../pattern_authoring/widgets/token_chip.dart';
+
 /// One sender's group of unmatched SMS (FR-005..007): sender header, count,
 /// a preview of each message + timestamp, and Teach / Dismiss actions.
 class UnmatchedSenderGroup extends StatelessWidget {
@@ -74,8 +76,17 @@ class UnmatchedSenderGroup extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
-            for (final m in messages.take(3))
-              _MessagePreview(message: m),
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: messages.length > 3 ? 3 : messages.length,
+              separatorBuilder: (context, index) => Divider(
+                height: 8,
+                color: scheme.outlineVariant.withValues(alpha: 0.5),
+              ),
+              itemBuilder: (context, index) =>
+                  _MessagePreview(message: messages[index]),
+            ),
             if (messages.length > 3)
               Padding(
                 padding: const EdgeInsets.only(top: 4, left: 4),
@@ -115,34 +126,28 @@ class _MessagePreview extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = context.colorScheme;
     final body = message.body;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Directionality(
+            textDirection: detectBaseDirection(body ?? ""),
             child: Text(
               body == null || body.isEmpty
                   ? '(preview unavailable until scan)'
                   : body,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 13,
-                color: scheme.onSurfaceVariant,
-              ),
+              style: TextStyle(fontSize: 13, color: scheme.onSurfaceVariant),
             ),
           ),
-          const SizedBox(width: 8),
-          Text(
-            DateFormat('dd MMM, HH:mm').format(message.receivedAt),
-            style: TextStyle(
-              fontSize: 11,
-              color: scheme.onSurfaceVariant,
-            ),
-          ),
-        ],
-      ),
+        ),
+        const SizedBox(width: 16),
+        Text(
+          DateFormat('dd MMM, HH:mm').format(message.receivedAt),
+          style: TextStyle(fontSize: 11, color: scheme.onSurfaceVariant),
+        ),
+      ],
     );
   }
 }
