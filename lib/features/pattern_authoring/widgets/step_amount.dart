@@ -11,6 +11,7 @@ class StepAmount extends StatelessWidget {
   final String body;
   final List<NumericToken> tokens;
   final NumericToken? selected;
+  final bool isIncome;
 
   /// Called when the user taps an amount chip.
   final ValueChanged<NumericToken> onSelect;
@@ -21,6 +22,7 @@ class StepAmount extends StatelessWidget {
     required this.tokens,
     this.selected,
     required this.onSelect,
+    required this.isIncome,
   });
 
   @override
@@ -55,7 +57,7 @@ class StepAmount extends StatelessWidget {
           label: t.rawText,
           selected: selected != null && t == selected,
           deEmphasized: t.isLikelyNonTransactional,
-          role: TokenRole.amount,
+          role: isIncome ? TokenRole.amountIncome : TokenRole.amountExpense,
           onTap: () => onSelect(t),
         ),
     ];

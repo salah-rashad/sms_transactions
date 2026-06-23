@@ -30,7 +30,12 @@ class TokenChip extends StatelessWidget {
     Color border;
     if (selected) {
       switch (role) {
-        case TokenRole.amount:
+        case TokenRole.amountIncome:
+          fg = colors.income;
+          bg = colors.income.withValues(alpha: 0.12);
+          border = colors.income;
+          break;
+        case TokenRole.amountExpense:
           fg = colors.expense;
           bg = colors.expense.withValues(alpha: 0.12);
           border = colors.expense;
@@ -91,7 +96,7 @@ class TokenChip extends StatelessWidget {
   }
 }
 
-enum TokenRole { none, amount, balance, counterparty }
+enum TokenRole { none, amountIncome, amountExpense, balance, counterparty }
 
 /// A span of text in the SMS body to render as a tappable chip.
 class TokenSpan {
@@ -126,7 +131,8 @@ class AnnotatedSmsBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = context.colorScheme;
-    final sorted = [...spans]..sort((a, b) => a.startIndex.compareTo(b.startIndex));
+    final sorted = [...spans]
+      ..sort((a, b) => a.startIndex.compareTo(b.startIndex));
 
     final children = <Widget>[];
     var cursor = 0;
@@ -177,7 +183,6 @@ class AnnotatedSmsBody extends StatelessWidget {
       ),
     );
   }
-
 }
 
 /// Detects the base direction of a body from the first strong directional

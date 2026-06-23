@@ -163,6 +163,7 @@ class PatternAuthoringScreen extends StatelessWidget {
           tokens: state.numericTokens,
           selected: state.amount,
           onSelect: cubit.selectAmount,
+          isIncome: state.direction == SmsDirection.income,
         );
       case AuthoringStep.balance:
         return StepBalance(
@@ -187,6 +188,9 @@ class PatternAuthoringScreen extends StatelessWidget {
           preview: state.preview,
           direction: state.direction ?? SmsDirection.expense,
           isSaving: state.isSaving,
+          amountToken: state.amount,
+          balanceToken: state.balance,
+          counterpartyToken: state.counterparty,
         );
     }
   }
