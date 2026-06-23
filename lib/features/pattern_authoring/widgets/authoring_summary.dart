@@ -42,16 +42,15 @@ class AuthoringSummary extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _Field(
-                  label: 'Amount',
-                  value: preview != null
-                      ? formatCurrency(preview!.amount, decimals: 2)
-                      : '—',
-                  icon: Icons.payments_outlined,
-                  color: direction == SmsDirection.income
-                      ? context.appColors.income
-                      : context.appColors.expense,
-                ),
+                if (preview?.amount != null)
+                  _Field(
+                    label: 'Amount',
+                    value: formatCurrency(preview!.amount!, decimals: 2),
+                    icon: Icons.payments_outlined,
+                    color: direction == SmsDirection.income
+                        ? context.appColors.income
+                        : context.appColors.expense,
+                  ),
                 if (preview?.balance != null)
                   _Field(
                     label: 'Balance',
@@ -115,6 +114,8 @@ class AuthoringSummary extends StatelessWidget {
         return 'Expense';
       case SmsDirection.balanceCheck:
         return 'Balance Check';
+      case SmsDirection.ignore:
+        return 'Not a transaction';
     }
   }
 
@@ -126,6 +127,8 @@ class AuthoringSummary extends StatelessWidget {
         return Icons.arrow_upward;
       case SmsDirection.balanceCheck:
         return Icons.info_outline;
+      case SmsDirection.ignore:
+        return Icons.block_flipped;
     }
   }
 }

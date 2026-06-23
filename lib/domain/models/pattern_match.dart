@@ -14,7 +14,11 @@ class PatternMatch {
   final String smsId;
   final String? patternId;
   final String senderId;
-  final double amount;
+
+  /// Required for income/expense matches. Null is valid for [balanceCheck]
+  /// (the balance is the value of interest) and never persisted for
+  /// [SmsDirection.ignore] (those don't create PatternMatch rows at all).
+  final double? amount;
   final double? balance;
   final String? counterparty;
   final SmsDirection direction;
@@ -47,6 +51,7 @@ class PatternMatch {
     DateTime? receivedAt,
     DateTime? matchedAt,
     bool clearPatternId = false,
+    bool clearAmount = false,
     bool clearBalance = false,
     bool clearCounterparty = false,
   }) {
@@ -54,7 +59,7 @@ class PatternMatch {
       smsId: smsId ?? this.smsId,
       patternId: clearPatternId ? null : (patternId ?? this.patternId),
       senderId: senderId ?? this.senderId,
-      amount: amount ?? this.amount,
+      amount: clearAmount ? null : (amount ?? this.amount),
       balance: clearBalance ? null : (balance ?? this.balance),
       counterparty:
           clearCounterparty ? null : (counterparty ?? this.counterparty),

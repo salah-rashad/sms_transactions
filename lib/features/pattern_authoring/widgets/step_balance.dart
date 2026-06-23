@@ -3,13 +3,19 @@ import 'package:sms_transactions/core/extensions/build_context.dart';
 import 'package:sms_transactions/domain/models/sms_token.dart';
 import 'package:sms_transactions/features/pattern_authoring/widgets/token_chip.dart';
 
-/// Step 2 (FR-010): the user taps a remaining numeric chip to mark the running
-/// balance, or skips. The already-selected amount chip is excluded.
+/// Balance picker step. Used both as the optional running-balance step for
+/// income/expense patterns (skip allowed) and as the primary value step for
+/// balance-check patterns ([isPrimary] = true; skip hidden by the screen).
 class StepBalance extends StatelessWidget {
   final String body;
   final List<NumericToken> tokens;
-  final NumericToken amount;
+
+  /// The previously-picked amount token (income/expense flow). Null when this
+  /// step is the primary value step (balance-check flow), where no amount has
+  /// been chosen.
+  final NumericToken? amount;
   final NumericToken? selected;
+  final bool isPrimary;
 
   /// Called with the chosen balance token, or null when the user skips.
   final ValueChanged<NumericToken?> onSelect;
@@ -18,9 +24,10 @@ class StepBalance extends StatelessWidget {
     super.key,
     required this.body,
     required this.tokens,
-    required this.amount,
+    this.amount,
     this.selected,
     required this.onSelect,
+    this.isPrimary = false,
   });
 
   @override
@@ -29,17 +36,22 @@ class StepBalance extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Tap the running balance', style: context.textTheme.titleMedium),
+        Text(
+          isPrimary ? 'Tap the balance' : 'Tap the running balance',
+          style: context.textTheme.titleMedium,
+        ),
         const SizedBox(height: 4),
         Text(
-          'Optional — skip if this message has no balance.',
+          isPrimary
+              ? 'This message has no transaction amount — only the balance.'
+              : 'Optional — skip if this message has no balance.',
           style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant),
         ),
         const SizedBox(height: 16),
         if (_selectable.isEmpty)
           const _EmptyHint(
             icon: Icons.looks_two_outlined,
-            message: 'No other numbers to choose from. Tap Skip.',
+            message: 'No numbers to choose from.',
           )
         else
           AnnotatedSmsBody(body: body, spans: _spans),

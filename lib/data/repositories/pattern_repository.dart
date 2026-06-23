@@ -32,8 +32,8 @@ class PatternRepository {
           SmsPatternsCompanion(
             id: Value(pattern.id),
             senderId: Value(pattern.senderId),
-            amountBefore: Value(pattern.amountLocator.beforeAnchor),
-            amountAfter: Value(pattern.amountLocator.afterAnchor),
+            amountBefore: Value(pattern.amountLocator?.beforeAnchor),
+            amountAfter: Value(pattern.amountLocator?.afterAnchor),
             balanceBefore: Value(pattern.balanceLocator?.beforeAnchor),
             balanceAfter: Value(pattern.balanceLocator?.afterAnchor),
             counterpartyBefore: Value(pattern.counterpartyLocator?.beforeAnchor),
@@ -82,10 +82,12 @@ class PatternRepository {
     return SmsPattern(
       id: row.id,
       senderId: row.senderId,
-      amountLocator: FieldLocator(
-        beforeAnchor: row.amountBefore,
-        afterAnchor: row.amountAfter,
-      ),
+      amountLocator: (row.amountBefore == null && row.amountAfter == null)
+          ? null
+          : FieldLocator(
+              beforeAnchor: row.amountBefore ?? '',
+              afterAnchor: row.amountAfter ?? '',
+            ),
       balanceLocator: (row.balanceBefore == null && row.balanceAfter == null)
           ? null
           : FieldLocator(

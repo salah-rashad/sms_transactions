@@ -30,20 +30,26 @@ class PatternMatcher {
   SmsPattern derivePattern({
     required String senderId,
     required String exampleBody,
-    required NumericToken amount,
+    NumericToken? amount,
     NumericToken? balance,
     TextToken? counterparty,
     required SmsDirection direction,
     String? patternId,
     DateTime? createdAt,
   }) {
+    assert(
+      amount != null || balance != null || counterparty != null,
+      'At least one of amount/balance/counterparty must be provided',
+    );
     return SmsPattern(
       id: patternId ?? '',
       senderId: senderId,
-      amountLocator: FieldLocator(
-        beforeAnchor: amount.beforeWord,
-        afterAnchor: amount.afterWord,
-      ),
+      amountLocator: amount == null
+          ? null
+          : FieldLocator(
+              beforeAnchor: amount.beforeWord,
+              afterAnchor: amount.afterWord,
+            ),
       balanceLocator: balance == null
           ? null
           : FieldLocator(
@@ -67,26 +73,40 @@ class PatternMatcher {
     );
   }
 
-  /// Applies [pattern] to [body]. Succeeds iff the amount anchor resolves;
-  /// balance/counterparty are best-effort and may be null (FR-025).
-  /// Anchors match with `\s+` tolerance (FR-033). Returns null when the amount
-  /// anchor is absent (→ caller routes to unmatched, FR-025).
+  /// Applies [pattern] to [body]. The gate locator depends on direction:
+  /// income/expense need amountLocator; balanceCheck needs balanceLocator;
+  /// ignore needs counterpartyLocator. Other locators are best-effort
+  /// (FR-025). Anchors match with `\s+` tolerance (FR-033). Returns null when
+  /// the gate locator is absent or doesn't resolve (→ caller routes to
+  /// unmatched, FR-025).
   PatternMatch? match(
     SmsPattern pattern,
     String smsId,
     String body,
     DateTime receivedAt,
   ) {
-    final amount = _extractAmount(pattern.amountLocator, body);
-    if (amount == null) return null;
+    final amount = _extractBestEffort(pattern.amountLocator, body);
+    final balance = _extractBestEffort(pattern.balanceLocator, body);
+    final counterparty = _extractText(pattern.counterpartyLocator, body);
+
+    // Direction-aware gate: the locator that MUST resolve for a match.
+    switch (pattern.direction) {
+      case SmsDirection.income:
+      case SmsDirection.expense:
+        if (amount == null) return null;
+      case SmsDirection.balanceCheck:
+        if (balance == null) return null;
+      case SmsDirection.ignore:
+        if (counterparty == null) return null;
+    }
 
     return PatternMatch(
       smsId: smsId,
       patternId: pattern.id.isEmpty ? null : pattern.id,
       senderId: pattern.senderId,
       amount: amount,
-      balance: _extractBestEffort(pattern.balanceLocator, body),
-      counterparty: _extractText(pattern.counterpartyLocator, body),
+      balance: balance,
+      counterparty: counterparty,
       direction: pattern.direction,
       receivedAt: receivedAt,
       matchedAt: DateTime.now(),
@@ -112,13 +132,6 @@ class PatternMatcher {
       if (result != null) return result;
     }
     return null;
-  }
-
-  /// Resolves the amount locator against [body]: looks for
-  /// `beforeAnchor \s+ <number> \s+ afterAnchor` (FR-033). Returns the
-  /// normalized amount, or null if the anchor pattern doesn't resolve.
-  double? _extractAmount(FieldLocator locator, String body) {
-    return _extractBestEffort(locator, body);
   }
 
   double? _extractBestEffort(FieldLocator? locator, String body) {

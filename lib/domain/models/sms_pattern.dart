@@ -5,8 +5,11 @@ import 'package:sms_transactions/domain/models/transaction.dart';
 enum SmsDirection {
   income,
   expense,
-  balanceCheck;
+  balanceCheck,
+  ignore;
 
+  /// Maps to a [TransactionType] for ledger entry. [ignore] has no mapping —
+  /// callers must filter ignore-direction matches before reaching this.
   TransactionType toTransactionType() {
     switch (this) {
       case SmsDirection.income:
@@ -15,6 +18,10 @@ enum SmsDirection {
         return TransactionType.expense;
       case SmsDirection.balanceCheck:
         return TransactionType.balanceCheck;
+      case SmsDirection.ignore:
+        throw StateError(
+          'SmsDirection.ignore has no TransactionType — filter before mapping',
+        );
     }
   }
 
@@ -60,7 +67,11 @@ class FieldLocator {
 class SmsPattern {
   final String id;
   final String senderId;
-  final FieldLocator amountLocator;
+
+  /// Required for [SmsDirection.income] / [expense]; null allowed for
+  /// [balanceCheck] (balanceLocator is the gate) and [ignore]
+  /// (counterpartyLocator is the gate).
+  final FieldLocator? amountLocator;
   final FieldLocator? balanceLocator;
   final FieldLocator? counterpartyLocator;
   final SmsDirection direction;
@@ -76,7 +87,7 @@ class SmsPattern {
   const SmsPattern({
     required this.id,
     required this.senderId,
-    required this.amountLocator,
+    this.amountLocator,
     this.balanceLocator,
     this.counterpartyLocator,
     required this.direction,
@@ -105,17 +116,19 @@ class SmsPattern {
     DateTime? lastMatchedAt,
     int? totalAttempts,
     int? successfulMatches,
+    bool clearAmount = false,
     bool clearBalance = false,
     bool clearCounterparty = false,
   }) {
     return SmsPattern(
       id: id ?? this.id,
       senderId: senderId ?? this.senderId,
-      amountLocator: amountLocator ?? this.amountLocator,
+      amountLocator:
+          clearAmount ? null : (amountLocator ?? this.amountLocator),
       balanceLocator:
-          clearBalance ? balanceLocator : (balanceLocator ?? this.balanceLocator),
+          clearBalance ? null : (balanceLocator ?? this.balanceLocator),
       counterpartyLocator: clearCounterparty
-          ? counterpartyLocator
+          ? null
           : (counterpartyLocator ?? this.counterpartyLocator),
       direction: direction ?? this.direction,
       exampleBody: exampleBody ?? this.exampleBody,

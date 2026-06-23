@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sms_transactions/data/repositories/pattern_repository.dart';
 import 'package:sms_transactions/data/repositories/unmatched_sms_repository.dart';
+import 'package:sms_transactions/data/services/sms_scan_service.dart';
 import 'package:sms_transactions/di/injection.dart';
 import 'package:sms_transactions/domain/models/sms_pattern.dart';
 import 'package:sms_transactions/domain/models/unmatched_sms.dart';
@@ -115,6 +116,7 @@ class AppRouter {
                   patternRepository: getIt<PatternRepository>(),
                   patternMatchRepository: getIt<PatternMatchRepository>(),
                   unmatchedSmsRepository: getIt<UnmatchedSmsRepository>(),
+                  scanService: getIt<SmsScanService>(),
                 ),
                 child: const PatternAuthoringScreen(),
               );

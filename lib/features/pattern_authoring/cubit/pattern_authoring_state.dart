@@ -5,10 +5,11 @@ import 'package:sms_transactions/domain/models/unmatched_sms.dart';
 
 enum PatternAuthoringStatus { editing, saving, saved, error }
 
-/// Immutable state for the 4-step authoring wizard + summary (FR-008..014).
-/// See `contracts/cubits.contract.md`.
-///
-/// Step indices: 0=amount, 1=balance, 2=direction, 3=counterparty, 4=summary.
+/// One UI step in the authoring wizard. The active step plan depends on the
+/// chosen [SmsDirection] — see [PatternAuthoringState.activeSteps].
+enum AuthoringStep { direction, amount, balance, counterparty, summary }
+
+/// Immutable state for the direction-first authoring wizard + summary.
 /// `back()` decrements [stepIndex] without clearing later selections (FR-013).
 class PatternAuthoringState {
   final UnmatchedSms source;
@@ -27,6 +28,11 @@ class PatternAuthoringState {
   /// Live preview of how the derived pattern will parse the example (FR-014).
   final PatternMatch? preview;
 
+  /// After [save] succeeds, the next unmatched SMS from the same sender that
+  /// the wizard should auto-launch to keep teaching back-to-back. Null when
+  /// the sender's queue is empty after re-matching.
+  final UnmatchedSms? autoNextSms;
+
   final PatternAuthoringStatus status;
   final String? error;
 
@@ -42,37 +48,81 @@ class PatternAuthoringState {
     this.counterpartyTokens = const [],
     this.counterparty,
     this.preview,
+    this.autoNextSms,
     this.status = PatternAuthoringStatus.editing,
     this.error,
   });
 
   bool get isEditMode => editing != null;
-  bool get isSummary => stepIndex == _summaryIndex;
+  bool get isSummary => currentStep == AuthoringStep.summary;
   bool get isSaving => status == PatternAuthoringStatus.saving;
   bool get isSaved => status == PatternAuthoringStatus.saved;
   bool get hasError => status == PatternAuthoringStatus.error;
 
-  static const int amountStep = 0;
-  static const int balanceStep = 1;
-  static const int directionStep = 2;
-  static const int counterpartyStep = 3;
-  static const int _summaryIndex = 4;
+  /// The sequence of steps the wizard shows for the currently-selected
+  /// direction. Direction is step 0; once it's chosen, the primary value step
+  /// (amount/balance/counterparty) is step 1, then optional steps, then
+  /// summary.
+  List<AuthoringStep> get activeSteps {
+    switch (direction) {
+      case null:
+        return const [AuthoringStep.direction];
+      case SmsDirection.income:
+      case SmsDirection.expense:
+        return const [
+          AuthoringStep.direction,
+          AuthoringStep.amount,
+          AuthoringStep.balance,
+          AuthoringStep.counterparty,
+          AuthoringStep.summary,
+        ];
+      case SmsDirection.balanceCheck:
+        return const [
+          AuthoringStep.direction,
+          AuthoringStep.balance,
+          AuthoringStep.counterparty,
+          AuthoringStep.summary,
+        ];
+      case SmsDirection.ignore:
+        return const [
+          AuthoringStep.direction,
+          AuthoringStep.counterparty,
+          AuthoringStep.summary,
+        ];
+    }
+  }
 
-  /// Total selection steps (for "Step X of N" counter, FR-013).
-  static const int selectionStepCount = 4;
+  AuthoringStep get currentStep {
+    final steps = activeSteps;
+    if (stepIndex < 0) return steps.first;
+    if (stepIndex >= steps.length) return steps.last;
+    return steps[stepIndex];
+  }
+
+  /// Count of pickable steps (excludes the summary) for the "Step X of N"
+  /// header.
+  int get selectionStepCount => activeSteps.length - 1;
 
   /// Whether the current step's required input is satisfied (enables Continue).
   bool get canContinueCurrentStep {
-    switch (stepIndex) {
-      case amountStep:
-        return amount != null;
-      case balanceStep:
-        return true; // optional (skip allowed)
-      case directionStep:
+    switch (currentStep) {
+      case AuthoringStep.direction:
         return direction != null;
-      case counterpartyStep:
-        return true; // optional (skip allowed)
-      default:
+      case AuthoringStep.amount:
+        return amount != null;
+      case AuthoringStep.balance:
+        // Required when balance is the primary value (balanceCheck), optional
+        // otherwise.
+        return direction == SmsDirection.balanceCheck
+            ? balance != null
+            : true;
+      case AuthoringStep.counterparty:
+        // Required when counterparty is the primary identifier (ignore),
+        // optional otherwise.
+        return direction == SmsDirection.ignore
+            ? counterpartyTokens.isNotEmpty
+            : true;
+      case AuthoringStep.summary:
         return false;
     }
   }
@@ -89,6 +139,7 @@ class PatternAuthoringState {
     List<TextToken>? counterpartyTokens,
     TextToken? counterparty,
     PatternMatch? preview,
+    UnmatchedSms? autoNextSms,
     PatternAuthoringStatus? status,
     String? error,
     bool clearAmount = false,
@@ -96,6 +147,7 @@ class PatternAuthoringState {
     bool clearDirection = false,
     bool clearCounterparty = false,
     bool clearPreview = false,
+    bool clearAutoNext = false,
     bool clearError = false,
   }) {
     final resolvedTokens = clearCounterparty
@@ -114,6 +166,7 @@ class PatternAuthoringState {
       counterparty:
           clearCounterparty ? null : (counterparty ?? this.counterparty),
       preview: clearPreview ? null : (preview ?? this.preview),
+      autoNextSms: clearAutoNext ? null : (autoNextSms ?? this.autoNextSms),
       status: status ?? this.status,
       error: clearError ? null : error ?? this.error,
     );

@@ -12,9 +12,10 @@ import 'package:sms_transactions/features/pattern_authoring/widgets/step_counter
 import 'package:sms_transactions/features/pattern_authoring/widgets/step_direction.dart';
 import 'package:sms_transactions/features/unmatched/cubit/unmatched_cubit.dart';
 
-/// Single-route, cubit-driven 4-step wizard + summary (research R6). Back
-/// preserves later-step annotations (FR-013); quitting the route discards
-/// in-progress state. The cubit is route-scoped (provided by the router).
+/// Single-route, cubit-driven authoring wizard. The step sequence is derived
+/// from the chosen direction (see [PatternAuthoringState.activeSteps]). Back
+/// preserves later-step annotations (FR-013); quitting discards in-progress
+/// state. The cubit is route-scoped (provided by the router).
 class PatternAuthoringScreen extends StatelessWidget {
   const PatternAuthoringScreen({super.key});
 
@@ -26,9 +27,15 @@ class PatternAuthoringScreen extends StatelessWidget {
           (b.hasError && b.error != a.error),
       listener: (context, state) {
         if (state.isSaved) {
-          // Refresh the unmatched queue + return to the list (FR-015).
+          // Refresh the unmatched queue → if there's a next SMS waiting from
+          // the same sender, keep teaching back-to-back; otherwise pop back.
           context.read<UnmatchedCubit>().refresh();
-          context.pop();
+          final next = state.autoNextSms;
+          if (next != null) {
+            context.pushReplacement('/unmatched/teach', extra: next);
+          } else {
+            context.pop();
+          }
           return;
         }
         if (state.hasError) {
@@ -53,7 +60,8 @@ class PatternAuthoringScreen extends StatelessWidget {
               onPressed: () => _handleBack(context),
             ),
             title: BlocBuilder<PatternAuthoringCubit, PatternAuthoringState>(
-              buildWhen: (a, b) => a.stepIndex != b.stepIndex,
+              buildWhen: (a, b) =>
+                  a.stepIndex != b.stepIndex || a.direction != b.direction,
               builder: (context, state) => Text(_title(state)),
             ),
           ),
@@ -73,9 +81,7 @@ class PatternAuthoringScreen extends StatelessWidget {
               },
             ),
           ),
-          bottomNavigationBar: SafeArea(
-            child: _Footer(),
-          ),
+          bottomNavigationBar: const SafeArea(child: _Footer()),
         ),
       ),
     );
@@ -92,15 +98,18 @@ class PatternAuthoringScreen extends StatelessWidget {
 
   Widget _stepIndicator(BuildContext context, PatternAuthoringState state) {
     final scheme = context.colorScheme;
-    final current = (state.stepIndex + 1)
-        .clamp(0, PatternAuthoringState.selectionStepCount);
+    final total = state.selectionStepCount;
+    if (total <= 0) {
+      return const SizedBox.shrink();
+    }
+    final current = (state.stepIndex + 1).clamp(0, total);
     return Row(
       children: [
-        for (var i = 0; i < PatternAuthoringState.selectionStepCount; i++)
+        for (var i = 0; i < total; i++)
           Expanded(
             child: Container(
               height: 4,
-              margin: EdgeInsets.only(right: i == 3 ? 0 : 4),
+              margin: EdgeInsets.only(right: i == total - 1 ? 0 : 4),
               decoration: BoxDecoration(
                 color: i < current
                     ? scheme.primary
@@ -119,40 +128,38 @@ class PatternAuthoringScreen extends StatelessWidget {
     PatternAuthoringCubit cubit,
     String body,
   ) {
-    switch (state.stepIndex) {
-      case PatternAuthoringState.amountStep:
+    switch (state.currentStep) {
+      case AuthoringStep.direction:
+        return StepDirection(
+          body: body,
+          selected: state.direction,
+          onSelect: cubit.selectDirection,
+        );
+      case AuthoringStep.amount:
         return StepAmount(
           body: body,
           tokens: state.numericTokens,
           selected: state.amount,
           onSelect: cubit.selectAmount,
         );
-      case PatternAuthoringState.balanceStep:
-        if (state.amount == null) {
-          // Reached balance without an amount (e.g. edit pre-select miss); send
-          // the user back to pick one first.
-          return _NeedAmountHint(onBack: cubit.back);
-        }
+      case AuthoringStep.balance:
         return StepBalance(
           body: body,
           tokens: state.numericTokens,
-          amount: state.amount!,
+          amount: state.amount,
           selected: state.balance,
           onSelect: cubit.selectBalance,
+          isPrimary: state.direction == SmsDirection.balanceCheck,
         );
-      case PatternAuthoringState.directionStep:
-        return StepDirection(
-          selected: state.direction,
-          onSelect: cubit.selectDirection,
-        );
-      case PatternAuthoringState.counterpartyStep:
+      case AuthoringStep.counterparty:
         return StepCounterparty(
           body: body,
           tokens: state.textTokens,
           selectedTokens: state.counterpartyTokens,
           onToggle: cubit.toggleCounterpartyToken,
+          isIdentifier: state.direction == SmsDirection.ignore,
         );
-      default:
+      case AuthoringStep.summary:
         return AuthoringSummary(
           body: body,
           preview: state.preview,
@@ -164,43 +171,35 @@ class PatternAuthoringScreen extends StatelessWidget {
 
   String _title(PatternAuthoringState state) {
     if (state.isSummary) return 'Summary';
-    return 'Step ${state.stepIndex + 1} of ${PatternAuthoringState.selectionStepCount}';
-  }
-}
-
-class _NeedAmountHint extends StatelessWidget {
-  final VoidCallback onBack;
-
-  const _NeedAmountHint({required this.onBack});
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = context.colorScheme;
-    return Column(
-      children: [
-        Icon(Icons.warning_amber_outlined, size: 40, color: scheme.error),
-        const SizedBox(height: 12),
-        Text('Please select an amount first.', style: context.textTheme.bodyMedium),
-        const SizedBox(height: 12),
-        FilledButton(onPressed: onBack, child: const Text('Back to amount')),
-      ],
-    );
+    return 'Step ${state.stepIndex + 1} of ${state.selectionStepCount}';
   }
 }
 
 class _Footer extends StatelessWidget {
+  const _Footer();
+
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<PatternAuthoringCubit, PatternAuthoringState>(
       buildWhen: (a, b) =>
           a.stepIndex != b.stepIndex ||
+          a.direction != b.direction ||
           a.isSaving != b.isSaving ||
           a.status != b.status ||
           a.counterpartyTokens != b.counterpartyTokens,
       builder: (context, state) {
         final cubit = context.read<PatternAuthoringCubit>();
-        switch (state.stepIndex) {
-          case PatternAuthoringState.balanceStep:
+        switch (state.currentStep) {
+          case AuthoringStep.direction:
+            // Direction tiles advance on tap; no footer action.
+            return const SizedBox.shrink();
+          case AuthoringStep.amount:
+            return const SizedBox.shrink();
+          case AuthoringStep.balance:
+            // Skip allowed only when balance is OPTIONAL (income/expense).
+            if (state.direction == SmsDirection.balanceCheck) {
+              return const SizedBox.shrink();
+            }
             return Padding(
               padding: const EdgeInsets.all(16),
               child: FilledButton.tonal(
@@ -208,32 +207,33 @@ class _Footer extends StatelessWidget {
                 child: const Text('Skip balance'),
               ),
             );
-          case PatternAuthoringState.counterpartyStep:
+          case AuthoringStep.counterparty:
+            final isIdentifier = state.direction == SmsDirection.ignore;
             final hasSelection = state.counterpartyTokens.isNotEmpty;
             return Padding(
               padding: const EdgeInsets.all(16),
               child: Row(
                 children: [
-                  Expanded(
-                    child: FilledButton.tonal(
-                      onPressed: cubit.skipCounterparty,
-                      child: const Text('Skip'),
+                  if (!isIdentifier)
+                    Expanded(
+                      child: FilledButton.tonal(
+                        onPressed: cubit.skipCounterparty,
+                        child: const Text('Skip'),
+                      ),
                     ),
-                  ),
-                  if (hasSelection) ...[
+                  if (!isIdentifier && hasSelection)
                     const SizedBox(width: 12),
+                  if (hasSelection)
                     Expanded(
                       child: FilledButton(
                         onPressed: cubit.confirmCounterparty,
                         child: const Text('Continue'),
                       ),
                     ),
-                  ],
                 ],
               ),
             );
-          default:
-            if (!state.isSummary) return const SizedBox.shrink();
+          case AuthoringStep.summary:
             return Padding(
               padding: const EdgeInsets.all(16),
               child: FilledButton.icon(
@@ -245,7 +245,9 @@ class _Footer extends StatelessWidget {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.check),
-                label: Text(state.isEditMode ? 'Update pattern' : 'Save pattern'),
+                label: Text(
+                  state.isEditMode ? 'Update pattern' : 'Save pattern',
+                ),
               ),
             );
         }

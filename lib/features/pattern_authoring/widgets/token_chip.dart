@@ -168,7 +168,7 @@ class AnnotatedSmsBody extends StatelessWidget {
     }
 
     return Directionality(
-      textDirection: _baseDirection(body),
+      textDirection: detectBaseDirection(body),
       child: Wrap(
         spacing: 4,
         runSpacing: 4,
@@ -178,16 +178,17 @@ class AnnotatedSmsBody extends StatelessWidget {
     );
   }
 
-  /// Detects the base direction from the first strong directional character
-  /// (Arabic → RTL, otherwise LTR) (FR-030).
-  static TextDirection _baseDirection(String body) {
-    final arabic = RegExp(r'[\u0600-\u06FF]');
-    for (final match in arabic.allMatches(body)) {
-      // If an Arabic char appears before the first Latin letter, treat as RTL.
-      final before = body.substring(0, match.start);
-      if (!RegExp(r'[A-Za-z]').hasMatch(before)) return TextDirection.rtl;
-      return TextDirection.ltr;
-    }
+}
+
+/// Detects the base direction of a body from the first strong directional
+/// character (Arabic → RTL, otherwise LTR) (FR-030). Public so plain-text
+/// previews of SMS bodies match the chip-annotated layout's direction.
+TextDirection detectBaseDirection(String body) {
+  final arabic = RegExp(r'[\u0600-\u06FF]');
+  for (final match in arabic.allMatches(body)) {
+    final before = body.substring(0, match.start);
+    if (!RegExp(r'[A-Za-z]').hasMatch(before)) return TextDirection.rtl;
     return TextDirection.ltr;
   }
+  return TextDirection.ltr;
 }

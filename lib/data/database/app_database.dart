@@ -42,8 +42,8 @@ class SalaryMarks extends Table {
 class SmsPatterns extends Table {
   TextColumn get id => text()();
   TextColumn get senderId => text()();
-  TextColumn get amountBefore => text()();
-  TextColumn get amountAfter => text()();
+  TextColumn get amountBefore => text().nullable()();
+  TextColumn get amountAfter => text().nullable()();
   TextColumn get balanceBefore => text().nullable()();
   TextColumn get balanceAfter => text().nullable()();
   TextColumn get counterpartyBefore => text().nullable()();
@@ -64,7 +64,7 @@ class PatternMatches extends Table {
   TextColumn get smsId => text()();
   TextColumn get patternId => text().nullable()();
   TextColumn get senderId => text()();
-  RealColumn get amount => real()();
+  RealColumn get amount => real().nullable()();
   RealColumn get balance => real().nullable()();
   TextColumn get counterparty => text().nullable()();
   IntColumn get direction => integer()();
@@ -112,7 +112,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -124,6 +124,13 @@ class AppDatabase extends _$AppDatabase {
         await m.createTable(patternMatches);
         await m.createTable(unmatchedSmsRecords);
         await m.createTable(suppressedSenders);
+      }
+      if (from < 3) {
+        // v3: make amount columns nullable on SmsPatterns + PatternMatches
+        // (SmsDirection.balanceCheck/ignore patterns may have no amount).
+        // SQLite has no ALTER COLUMN DROP NOT NULL; rebuild the two tables.
+        await m.alterTable(TableMigration(smsPatterns));
+        await m.alterTable(TableMigration(patternMatches));
       }
     },
   );

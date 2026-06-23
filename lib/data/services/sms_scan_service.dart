@@ -101,6 +101,20 @@ class SmsScanService {
     final conflicts = <PatternMatch>[];
 
     for (final match in matched.matches) {
+      // Ignore-direction matches never enter the ledger; they just dismiss
+      // the SMS and bump pattern confidence.
+      if (match.direction == SmsDirection.ignore) {
+        await unmatchedSmsRepository.removeBySmsId(match.smsId);
+        if (match.patternId != null) {
+          await patternRepository.recordAttempt(
+            match.patternId!,
+            success: true,
+            matchedAt: match.matchedAt,
+          );
+        }
+        continue;
+      }
+
       final prior = existingBySmsId[match.smsId];
       if (prior != null) {
         // Already parsed → conflict (FR-023).
@@ -166,6 +180,74 @@ class SmsScanService {
       unmatchedCount: finalCount,
       conflicts: conflicts,
     );
+  }
+
+  /// After a user teaches/edits a pattern, apply ALL patterns for [senderId]
+  /// against the still-unmatched messages from the same sender. Matches are
+  /// persisted (or, for [SmsDirection.ignore], just dismissed) and removed
+  /// from the queue. Returns the SMS that remained unmatched after this pass,
+  /// so the caller can decide whether to keep teaching back-to-back.
+  ///
+  /// Bodies come from the transient [_bodyCache] populated by the last scan,
+  /// plus any extra bodies the caller supplies via [extraBodies] (e.g. the
+  /// SMS the user is currently teaching).
+  Future<List<UnmatchedSms>> rematchSender(
+    String senderId, {
+    Map<String, String> extraBodies = const {},
+  }) async {
+    final unmatched = (await unmatchedSmsRepository.getActive())
+        .where((u) => u.senderId == senderId)
+        .toList();
+    if (unmatched.isEmpty) return const [];
+
+    final patterns = await patternRepository.getForSender(senderId);
+    if (patterns.isEmpty) return unmatched;
+
+    final smsInputs = <_SmsInput>[];
+    final remaining = <UnmatchedSms>[];
+    for (final u in unmatched) {
+      final body = extraBodies[u.smsId] ?? _bodyCache[u.smsId] ?? u.body ?? '';
+      if (body.isEmpty) {
+        // Can't re-match without a body — leave in the queue for the next scan.
+        remaining.add(u);
+        continue;
+      }
+      smsInputs.add(_SmsInput(
+        id: u.smsId,
+        senderId: senderId,
+        body: body,
+        receivedMs: u.receivedAt.millisecondsSinceEpoch,
+      ));
+    }
+
+    if (smsInputs.isEmpty) return remaining;
+
+    final result =
+        await compute(_runMatching, _IsolateInput(smsInputs, patterns));
+
+    final matchedIds = <String>{};
+    for (final match in result.matches) {
+      matchedIds.add(match.smsId);
+      await unmatchedSmsRepository.removeBySmsId(match.smsId);
+      if (match.direction != SmsDirection.ignore) {
+        await patternMatchRepository.upsert(match);
+      }
+      if (match.patternId != null) {
+        await patternRepository.recordAttempt(
+          match.patternId!,
+          success: true,
+          matchedAt: match.matchedAt,
+        );
+      }
+    }
+
+    for (final u in unmatched) {
+      if (!matchedIds.contains(u.smsId) &&
+          !remaining.any((r) => r.smsId == u.smsId)) {
+        remaining.add(u);
+      }
+    }
+    return remaining;
   }
 }
 

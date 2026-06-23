@@ -681,9 +681,9 @@ class $SmsPatternsTable extends SmsPatterns
   late final GeneratedColumn<String> amountBefore = GeneratedColumn<String>(
     'amount_before',
     aliasedName,
-    false,
+    true,
     type: DriftSqlType.string,
-    requiredDuringInsert: true,
+    requiredDuringInsert: false,
   );
   static const VerificationMeta _amountAfterMeta = const VerificationMeta(
     'amountAfter',
@@ -692,9 +692,9 @@ class $SmsPatternsTable extends SmsPatterns
   late final GeneratedColumn<String> amountAfter = GeneratedColumn<String>(
     'amount_after',
     aliasedName,
-    false,
+    true,
     type: DriftSqlType.string,
-    requiredDuringInsert: true,
+    requiredDuringInsert: false,
   );
   static const VerificationMeta _balanceBeforeMeta = const VerificationMeta(
     'balanceBefore',
@@ -859,8 +859,6 @@ class $SmsPatternsTable extends SmsPatterns
           _amountBeforeMeta,
         ),
       );
-    } else if (isInserting) {
-      context.missing(_amountBeforeMeta);
     }
     if (data.containsKey('amount_after')) {
       context.handle(
@@ -870,8 +868,6 @@ class $SmsPatternsTable extends SmsPatterns
           _amountAfterMeta,
         ),
       );
-    } else if (isInserting) {
-      context.missing(_amountAfterMeta);
     }
     if (data.containsKey('balance_before')) {
       context.handle(
@@ -983,11 +979,11 @@ class $SmsPatternsTable extends SmsPatterns
       amountBefore: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}amount_before'],
-      )!,
+      ),
       amountAfter: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}amount_after'],
-      )!,
+      ),
       balanceBefore: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}balance_before'],
@@ -1040,8 +1036,8 @@ class $SmsPatternsTable extends SmsPatterns
 class SmsPatternRow extends DataClass implements Insertable<SmsPatternRow> {
   final String id;
   final String senderId;
-  final String amountBefore;
-  final String amountAfter;
+  final String? amountBefore;
+  final String? amountAfter;
   final String? balanceBefore;
   final String? balanceAfter;
   final String? counterpartyBefore;
@@ -1055,8 +1051,8 @@ class SmsPatternRow extends DataClass implements Insertable<SmsPatternRow> {
   const SmsPatternRow({
     required this.id,
     required this.senderId,
-    required this.amountBefore,
-    required this.amountAfter,
+    this.amountBefore,
+    this.amountAfter,
     this.balanceBefore,
     this.balanceAfter,
     this.counterpartyBefore,
@@ -1073,8 +1069,12 @@ class SmsPatternRow extends DataClass implements Insertable<SmsPatternRow> {
     final map = <String, Expression>{};
     map['id'] = Variable<String>(id);
     map['sender_id'] = Variable<String>(senderId);
-    map['amount_before'] = Variable<String>(amountBefore);
-    map['amount_after'] = Variable<String>(amountAfter);
+    if (!nullToAbsent || amountBefore != null) {
+      map['amount_before'] = Variable<String>(amountBefore);
+    }
+    if (!nullToAbsent || amountAfter != null) {
+      map['amount_after'] = Variable<String>(amountAfter);
+    }
     if (!nullToAbsent || balanceBefore != null) {
       map['balance_before'] = Variable<String>(balanceBefore);
     }
@@ -1102,8 +1102,12 @@ class SmsPatternRow extends DataClass implements Insertable<SmsPatternRow> {
     return SmsPatternsCompanion(
       id: Value(id),
       senderId: Value(senderId),
-      amountBefore: Value(amountBefore),
-      amountAfter: Value(amountAfter),
+      amountBefore: amountBefore == null && nullToAbsent
+          ? const Value.absent()
+          : Value(amountBefore),
+      amountAfter: amountAfter == null && nullToAbsent
+          ? const Value.absent()
+          : Value(amountAfter),
       balanceBefore: balanceBefore == null && nullToAbsent
           ? const Value.absent()
           : Value(balanceBefore),
@@ -1135,8 +1139,8 @@ class SmsPatternRow extends DataClass implements Insertable<SmsPatternRow> {
     return SmsPatternRow(
       id: serializer.fromJson<String>(json['id']),
       senderId: serializer.fromJson<String>(json['senderId']),
-      amountBefore: serializer.fromJson<String>(json['amountBefore']),
-      amountAfter: serializer.fromJson<String>(json['amountAfter']),
+      amountBefore: serializer.fromJson<String?>(json['amountBefore']),
+      amountAfter: serializer.fromJson<String?>(json['amountAfter']),
       balanceBefore: serializer.fromJson<String?>(json['balanceBefore']),
       balanceAfter: serializer.fromJson<String?>(json['balanceAfter']),
       counterpartyBefore: serializer.fromJson<String?>(
@@ -1159,8 +1163,8 @@ class SmsPatternRow extends DataClass implements Insertable<SmsPatternRow> {
     return <String, dynamic>{
       'id': serializer.toJson<String>(id),
       'senderId': serializer.toJson<String>(senderId),
-      'amountBefore': serializer.toJson<String>(amountBefore),
-      'amountAfter': serializer.toJson<String>(amountAfter),
+      'amountBefore': serializer.toJson<String?>(amountBefore),
+      'amountAfter': serializer.toJson<String?>(amountAfter),
       'balanceBefore': serializer.toJson<String?>(balanceBefore),
       'balanceAfter': serializer.toJson<String?>(balanceAfter),
       'counterpartyBefore': serializer.toJson<String?>(counterpartyBefore),
@@ -1177,8 +1181,8 @@ class SmsPatternRow extends DataClass implements Insertable<SmsPatternRow> {
   SmsPatternRow copyWith({
     String? id,
     String? senderId,
-    String? amountBefore,
-    String? amountAfter,
+    Value<String?> amountBefore = const Value.absent(),
+    Value<String?> amountAfter = const Value.absent(),
     Value<String?> balanceBefore = const Value.absent(),
     Value<String?> balanceAfter = const Value.absent(),
     Value<String?> counterpartyBefore = const Value.absent(),
@@ -1192,8 +1196,8 @@ class SmsPatternRow extends DataClass implements Insertable<SmsPatternRow> {
   }) => SmsPatternRow(
     id: id ?? this.id,
     senderId: senderId ?? this.senderId,
-    amountBefore: amountBefore ?? this.amountBefore,
-    amountAfter: amountAfter ?? this.amountAfter,
+    amountBefore: amountBefore.present ? amountBefore.value : this.amountBefore,
+    amountAfter: amountAfter.present ? amountAfter.value : this.amountAfter,
     balanceBefore: balanceBefore.present
         ? balanceBefore.value
         : this.balanceBefore,
@@ -1313,8 +1317,8 @@ class SmsPatternRow extends DataClass implements Insertable<SmsPatternRow> {
 class SmsPatternsCompanion extends UpdateCompanion<SmsPatternRow> {
   final Value<String> id;
   final Value<String> senderId;
-  final Value<String> amountBefore;
-  final Value<String> amountAfter;
+  final Value<String?> amountBefore;
+  final Value<String?> amountAfter;
   final Value<String?> balanceBefore;
   final Value<String?> balanceAfter;
   final Value<String?> counterpartyBefore;
@@ -1346,8 +1350,8 @@ class SmsPatternsCompanion extends UpdateCompanion<SmsPatternRow> {
   SmsPatternsCompanion.insert({
     required String id,
     required String senderId,
-    required String amountBefore,
-    required String amountAfter,
+    this.amountBefore = const Value.absent(),
+    this.amountAfter = const Value.absent(),
     this.balanceBefore = const Value.absent(),
     this.balanceAfter = const Value.absent(),
     this.counterpartyBefore = const Value.absent(),
@@ -1361,8 +1365,6 @@ class SmsPatternsCompanion extends UpdateCompanion<SmsPatternRow> {
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        senderId = Value(senderId),
-       amountBefore = Value(amountBefore),
-       amountAfter = Value(amountAfter),
        direction = Value(direction),
        exampleBody = Value(exampleBody),
        createdAt = Value(createdAt);
@@ -1405,8 +1407,8 @@ class SmsPatternsCompanion extends UpdateCompanion<SmsPatternRow> {
   SmsPatternsCompanion copyWith({
     Value<String>? id,
     Value<String>? senderId,
-    Value<String>? amountBefore,
-    Value<String>? amountAfter,
+    Value<String?>? amountBefore,
+    Value<String?>? amountAfter,
     Value<String?>? balanceBefore,
     Value<String?>? balanceAfter,
     Value<String?>? counterpartyBefore,
@@ -1554,9 +1556,9 @@ class $PatternMatchesTable extends PatternMatches
   late final GeneratedColumn<double> amount = GeneratedColumn<double>(
     'amount',
     aliasedName,
-    false,
+    true,
     type: DriftSqlType.double,
-    requiredDuringInsert: true,
+    requiredDuringInsert: false,
   );
   static const VerificationMeta _balanceMeta = const VerificationMeta(
     'balance',
@@ -1664,8 +1666,6 @@ class $PatternMatchesTable extends PatternMatches
         _amountMeta,
         amount.isAcceptableOrUnknown(data['amount']!, _amountMeta),
       );
-    } else if (isInserting) {
-      context.missing(_amountMeta);
     }
     if (data.containsKey('balance')) {
       context.handle(
@@ -1730,7 +1730,7 @@ class $PatternMatchesTable extends PatternMatches
       amount: attachedDatabase.typeMapping.read(
         DriftSqlType.double,
         data['${effectivePrefix}amount'],
-      )!,
+      ),
       balance: attachedDatabase.typeMapping.read(
         DriftSqlType.double,
         data['${effectivePrefix}balance'],
@@ -1764,7 +1764,7 @@ class PatternMatchRow extends DataClass implements Insertable<PatternMatchRow> {
   final String smsId;
   final String? patternId;
   final String senderId;
-  final double amount;
+  final double? amount;
   final double? balance;
   final String? counterparty;
   final int direction;
@@ -1774,7 +1774,7 @@ class PatternMatchRow extends DataClass implements Insertable<PatternMatchRow> {
     required this.smsId,
     this.patternId,
     required this.senderId,
-    required this.amount,
+    this.amount,
     this.balance,
     this.counterparty,
     required this.direction,
@@ -1789,7 +1789,9 @@ class PatternMatchRow extends DataClass implements Insertable<PatternMatchRow> {
       map['pattern_id'] = Variable<String>(patternId);
     }
     map['sender_id'] = Variable<String>(senderId);
-    map['amount'] = Variable<double>(amount);
+    if (!nullToAbsent || amount != null) {
+      map['amount'] = Variable<double>(amount);
+    }
     if (!nullToAbsent || balance != null) {
       map['balance'] = Variable<double>(balance);
     }
@@ -1809,7 +1811,9 @@ class PatternMatchRow extends DataClass implements Insertable<PatternMatchRow> {
           ? const Value.absent()
           : Value(patternId),
       senderId: Value(senderId),
-      amount: Value(amount),
+      amount: amount == null && nullToAbsent
+          ? const Value.absent()
+          : Value(amount),
       balance: balance == null && nullToAbsent
           ? const Value.absent()
           : Value(balance),
@@ -1831,7 +1835,7 @@ class PatternMatchRow extends DataClass implements Insertable<PatternMatchRow> {
       smsId: serializer.fromJson<String>(json['smsId']),
       patternId: serializer.fromJson<String?>(json['patternId']),
       senderId: serializer.fromJson<String>(json['senderId']),
-      amount: serializer.fromJson<double>(json['amount']),
+      amount: serializer.fromJson<double?>(json['amount']),
       balance: serializer.fromJson<double?>(json['balance']),
       counterparty: serializer.fromJson<String?>(json['counterparty']),
       direction: serializer.fromJson<int>(json['direction']),
@@ -1846,7 +1850,7 @@ class PatternMatchRow extends DataClass implements Insertable<PatternMatchRow> {
       'smsId': serializer.toJson<String>(smsId),
       'patternId': serializer.toJson<String?>(patternId),
       'senderId': serializer.toJson<String>(senderId),
-      'amount': serializer.toJson<double>(amount),
+      'amount': serializer.toJson<double?>(amount),
       'balance': serializer.toJson<double?>(balance),
       'counterparty': serializer.toJson<String?>(counterparty),
       'direction': serializer.toJson<int>(direction),
@@ -1859,7 +1863,7 @@ class PatternMatchRow extends DataClass implements Insertable<PatternMatchRow> {
     String? smsId,
     Value<String?> patternId = const Value.absent(),
     String? senderId,
-    double? amount,
+    Value<double?> amount = const Value.absent(),
     Value<double?> balance = const Value.absent(),
     Value<String?> counterparty = const Value.absent(),
     int? direction,
@@ -1869,7 +1873,7 @@ class PatternMatchRow extends DataClass implements Insertable<PatternMatchRow> {
     smsId: smsId ?? this.smsId,
     patternId: patternId.present ? patternId.value : this.patternId,
     senderId: senderId ?? this.senderId,
-    amount: amount ?? this.amount,
+    amount: amount.present ? amount.value : this.amount,
     balance: balance.present ? balance.value : this.balance,
     counterparty: counterparty.present ? counterparty.value : this.counterparty,
     direction: direction ?? this.direction,
@@ -1941,7 +1945,7 @@ class PatternMatchesCompanion extends UpdateCompanion<PatternMatchRow> {
   final Value<String> smsId;
   final Value<String?> patternId;
   final Value<String> senderId;
-  final Value<double> amount;
+  final Value<double?> amount;
   final Value<double?> balance;
   final Value<String?> counterparty;
   final Value<int> direction;
@@ -1964,7 +1968,7 @@ class PatternMatchesCompanion extends UpdateCompanion<PatternMatchRow> {
     required String smsId,
     this.patternId = const Value.absent(),
     required String senderId,
-    required double amount,
+    this.amount = const Value.absent(),
     this.balance = const Value.absent(),
     this.counterparty = const Value.absent(),
     required int direction,
@@ -1973,7 +1977,6 @@ class PatternMatchesCompanion extends UpdateCompanion<PatternMatchRow> {
     this.rowid = const Value.absent(),
   }) : smsId = Value(smsId),
        senderId = Value(senderId),
-       amount = Value(amount),
        direction = Value(direction),
        receivedAt = Value(receivedAt),
        matchedAt = Value(matchedAt);
@@ -2007,7 +2010,7 @@ class PatternMatchesCompanion extends UpdateCompanion<PatternMatchRow> {
     Value<String>? smsId,
     Value<String?>? patternId,
     Value<String>? senderId,
-    Value<double>? amount,
+    Value<double?>? amount,
     Value<double?>? balance,
     Value<String?>? counterparty,
     Value<int>? direction,
@@ -3105,8 +3108,8 @@ typedef $$SmsPatternsTableCreateCompanionBuilder =
     SmsPatternsCompanion Function({
       required String id,
       required String senderId,
-      required String amountBefore,
-      required String amountAfter,
+      Value<String?> amountBefore,
+      Value<String?> amountAfter,
       Value<String?> balanceBefore,
       Value<String?> balanceAfter,
       Value<String?> counterpartyBefore,
@@ -3123,8 +3126,8 @@ typedef $$SmsPatternsTableUpdateCompanionBuilder =
     SmsPatternsCompanion Function({
       Value<String> id,
       Value<String> senderId,
-      Value<String> amountBefore,
-      Value<String> amountAfter,
+      Value<String?> amountBefore,
+      Value<String?> amountAfter,
       Value<String?> balanceBefore,
       Value<String?> balanceAfter,
       Value<String?> counterpartyBefore,
@@ -3403,8 +3406,8 @@ class $$SmsPatternsTableTableManager
               ({
                 Value<String> id = const Value.absent(),
                 Value<String> senderId = const Value.absent(),
-                Value<String> amountBefore = const Value.absent(),
-                Value<String> amountAfter = const Value.absent(),
+                Value<String?> amountBefore = const Value.absent(),
+                Value<String?> amountAfter = const Value.absent(),
                 Value<String?> balanceBefore = const Value.absent(),
                 Value<String?> balanceAfter = const Value.absent(),
                 Value<String?> counterpartyBefore = const Value.absent(),
@@ -3437,8 +3440,8 @@ class $$SmsPatternsTableTableManager
               ({
                 required String id,
                 required String senderId,
-                required String amountBefore,
-                required String amountAfter,
+                Value<String?> amountBefore = const Value.absent(),
+                Value<String?> amountAfter = const Value.absent(),
                 Value<String?> balanceBefore = const Value.absent(),
                 Value<String?> balanceAfter = const Value.absent(),
                 Value<String?> counterpartyBefore = const Value.absent(),
@@ -3497,7 +3500,7 @@ typedef $$PatternMatchesTableCreateCompanionBuilder =
       required String smsId,
       Value<String?> patternId,
       required String senderId,
-      required double amount,
+      Value<double?> amount,
       Value<double?> balance,
       Value<String?> counterparty,
       required int direction,
@@ -3510,7 +3513,7 @@ typedef $$PatternMatchesTableUpdateCompanionBuilder =
       Value<String> smsId,
       Value<String?> patternId,
       Value<String> senderId,
-      Value<double> amount,
+      Value<double?> amount,
       Value<double?> balance,
       Value<String?> counterparty,
       Value<int> direction,
@@ -3710,7 +3713,7 @@ class $$PatternMatchesTableTableManager
                 Value<String> smsId = const Value.absent(),
                 Value<String?> patternId = const Value.absent(),
                 Value<String> senderId = const Value.absent(),
-                Value<double> amount = const Value.absent(),
+                Value<double?> amount = const Value.absent(),
                 Value<double?> balance = const Value.absent(),
                 Value<String?> counterparty = const Value.absent(),
                 Value<int> direction = const Value.absent(),
@@ -3734,7 +3737,7 @@ class $$PatternMatchesTableTableManager
                 required String smsId,
                 Value<String?> patternId = const Value.absent(),
                 required String senderId,
-                required double amount,
+                Value<double?> amount = const Value.absent(),
                 Value<double?> balance = const Value.absent(),
                 Value<String?> counterparty = const Value.absent(),
                 required int direction,

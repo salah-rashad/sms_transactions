@@ -2,17 +2,25 @@ import 'package:flutter/material.dart';
 import 'package:sms_transactions/core/extensions/build_context.dart';
 import 'package:sms_transactions/core/theme/app_colors.dart';
 import 'package:sms_transactions/domain/models/sms_pattern.dart';
+import 'package:sms_transactions/features/pattern_authoring/widgets/token_chip.dart';
 
-/// Step 3 (FR-011): classify the transaction direction as Income, Expense, or
-/// Balance Check.
+/// Step 1: classify the message (income / expense / balance check / ignore).
+/// Shows a read-only preview of the SMS body so the user can decide.
 class StepDirection extends StatelessWidget {
   final SmsDirection? selected;
   final ValueChanged<SmsDirection> onSelect;
+  final String body;
 
-  const StepDirection({super.key, this.selected, required this.onSelect});
+  const StepDirection({
+    super.key,
+    required this.body,
+    this.selected,
+    required this.onSelect,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final scheme = context.colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -22,7 +30,29 @@ class StepDirection extends StatelessWidget {
           'How should this message be counted?',
           style: TextStyle(
             fontSize: 12,
-            color: context.colorScheme.onSurfaceVariant,
+            color: scheme.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            border: Border.all(color: scheme.outlineVariant),
+            borderRadius: BorderRadius.circular(8),
+            color: scheme.surfaceContainerHighest.withValues(alpha: 0.4),
+          ),
+          child: Directionality(
+            textDirection: detectBaseDirection(body),
+            child: Text(
+              body.isEmpty ? '(no body)' : body,
+              textAlign: TextAlign.start,
+              style: TextStyle(
+                fontSize: 13,
+                color: scheme.onSurface.withValues(alpha: 0.85),
+                height: 1.5,
+              ),
+            ),
           ),
         ),
         const SizedBox(height: 16),
@@ -52,7 +82,7 @@ class _DirectionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = context.colorScheme;
     final colors = context.appColors;
-    final (icon, label, subtitle, color) = _describe(direction, colors);
+    final (icon, label, subtitle, color) = _describe(direction, colors, scheme);
 
     return Card(
       elevation: 0,
@@ -100,6 +130,7 @@ class _DirectionTile extends StatelessWidget {
   (IconData, String, String, Color) _describe(
     SmsDirection d,
     AppColors colors,
+    ColorScheme scheme,
   ) {
     switch (d) {
       case SmsDirection.income:
@@ -122,6 +153,13 @@ class _DirectionTile extends StatelessWidget {
           'Balance Check',
           'Informational only — excluded from income/expense totals',
           colors.balance,
+        );
+      case SmsDirection.ignore:
+        return (
+          Icons.block_flipped,
+          'Not a transaction',
+          'Ignore this kind of message in future scans',
+          scheme.outline,
         );
     }
   }

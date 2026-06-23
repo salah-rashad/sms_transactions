@@ -214,4 +214,102 @@ void main() {
       expect(result, isNull);
     });
   });
+
+  group('PatternMatcher: balanceCheck without amount', () {
+    test('matches with null amount when balanceLocator resolves', () {
+      const body = 'Your balance is 1,200 EGP';
+      final balance = tokenIn(body, '1,200');
+      final pattern = matcher.derivePattern(
+        senderId: 'BANK',
+        exampleBody: body,
+        balance: balance,
+        direction: SmsDirection.balanceCheck,
+        patternId: 'bc',
+        createdAt: DateTime(2026, 1, 1),
+      );
+      expect(pattern.amountLocator, isNull);
+
+      const newBody = 'Your balance is 9,500 EGP';
+      final match = matcher.match(
+        pattern,
+        'sms-bc',
+        newBody,
+        DateTime(2026, 1, 2),
+      );
+      expect(match, isNotNull);
+      expect(match!.amount, isNull);
+      expect(match.balance, 9500.0);
+      expect(match.direction, SmsDirection.balanceCheck);
+    });
+
+    test('returns null when balance anchor absent', () {
+      const body = 'Your balance is 1,200 EGP';
+      final pattern = matcher.derivePattern(
+        senderId: 'BANK',
+        exampleBody: body,
+        balance: tokenIn(body, '1,200'),
+        direction: SmsDirection.balanceCheck,
+        patternId: 'bc',
+        createdAt: DateTime(2026, 1, 1),
+      );
+      const newBody = 'no anchor here either 1,200';
+      final match = matcher.match(
+        pattern,
+        'sms-bc2',
+        newBody,
+        DateTime(2026, 1, 3),
+      );
+      expect(match, isNull);
+    });
+  });
+
+  group('PatternMatcher: ignore-direction patterns', () {
+    const promoBody = 'Win 1000 EGP cashback if you spend today';
+
+    test('matches when counterpartyLocator resolves', () {
+      final tokens = SmsTokenizer().textTokens(promoBody);
+      final cashback = tokens.firstWhere((t) => t.rawText == 'cashback');
+      final pattern = matcher.derivePattern(
+        senderId: 'PROMO',
+        exampleBody: promoBody,
+        counterparty: cashback,
+        direction: SmsDirection.ignore,
+        patternId: 'ig',
+        createdAt: DateTime(2026, 1, 1),
+      );
+      expect(pattern.amountLocator, isNull);
+
+      const newBody = 'Get 500 EGP cashback if you act today';
+      final match = matcher.match(
+        pattern,
+        'sms-ig',
+        newBody,
+        DateTime(2026, 1, 2),
+      );
+      expect(match, isNotNull);
+      expect(match!.amount, isNull);
+      expect(match.direction, SmsDirection.ignore);
+    });
+
+    test('returns null when identifier anchor absent', () {
+      final tokens = SmsTokenizer().textTokens(promoBody);
+      final cashback = tokens.firstWhere((t) => t.rawText == 'cashback');
+      final pattern = matcher.derivePattern(
+        senderId: 'PROMO',
+        exampleBody: promoBody,
+        counterparty: cashback,
+        direction: SmsDirection.ignore,
+        patternId: 'ig',
+        createdAt: DateTime(2026, 1, 1),
+      );
+      const newBody = 'Your bill is due tomorrow';
+      final match = matcher.match(
+        pattern,
+        'sms-ig2',
+        newBody,
+        DateTime(2026, 1, 3),
+      );
+      expect(match, isNull);
+    });
+  });
 }
