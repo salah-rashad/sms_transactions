@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -24,8 +26,7 @@ class PatternAuthoringScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocListener<PatternAuthoringCubit, PatternAuthoringState>(
       listenWhen: (a, b) =>
-          a.isSaved != b.isSaved ||
-          (b.hasError && b.error != a.error),
+          a.isSaved != b.isSaved || (b.hasError && b.error != a.error),
       listener: (context, state) {
         if (state.isSaved) {
           // Refresh the unmatched queue → if there's a next SMS waiting from
@@ -33,7 +34,11 @@ class PatternAuthoringScreen extends StatelessWidget {
           context.read<UnmatchedCubit>().refresh();
           final next = state.autoNextSms;
           if (next != null) {
-            Logger.data('Authoring.nav', 'auto-next SMS=${next.smsId}', emoji: '🚀');
+            Logger.data(
+              'Authoring.nav',
+              'auto-next SMS=${next.smsId}',
+              emoji: '🚀',
+            );
             context.pushReplacement('/unmatched/teach', extra: next);
           } else {
             Logger.data('Authoring.nav', 'queue empty → pop', emoji: '👈');
@@ -101,10 +106,10 @@ class PatternAuthoringScreen extends StatelessWidget {
 
   Widget _stepIndicator(BuildContext context, PatternAuthoringState state) {
     final scheme = context.colorScheme;
-    final total = state.selectionStepCount;
-    if (total <= 0) {
-      return const SizedBox.shrink();
-    }
+    final total = max(1, state.selectionStepCount);
+    // if (total <= 0) {
+    //   return const SizedBox.shrink();
+    // }
     final current = (state.stepIndex + 1).clamp(0, total);
     return Row(
       children: [
@@ -173,6 +178,7 @@ class PatternAuthoringScreen extends StatelessWidget {
   }
 
   String _title(PatternAuthoringState state) {
+    if (state.isDirection) return 'Select direction';
     if (state.isSummary) return 'Summary';
     return 'Step ${state.stepIndex + 1} of ${state.selectionStepCount}';
   }
@@ -224,8 +230,7 @@ class _Footer extends StatelessWidget {
                         child: const Text('Skip'),
                       ),
                     ),
-                  if (!isIdentifier && hasSelection)
-                    const SizedBox(width: 12),
+                  if (!isIdentifier && hasSelection) const SizedBox(width: 12),
                   if (hasSelection)
                     Expanded(
                       child: FilledButton(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sms_transactions/core/extensions/build_context.dart';
 import 'package:sms_transactions/domain/models/sms_token.dart';
+import 'package:sms_transactions/features/pattern_authoring/widgets/step_header.dart';
 import 'package:sms_transactions/features/pattern_authoring/widgets/token_chip.dart';
 
 /// Text-token picker step. Used as the optional counterparty step (multi-word
@@ -31,19 +32,13 @@ class StepCounterparty extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          isIdentifier
-              ? 'Tap distinctive words'
-              : 'Counterparty (optional)',
-          style: context.textTheme.titleMedium,
-        ),
-        const SizedBox(height: 4),
-        Text(
-          isIdentifier
+        StepHeader(
+          icon: Icons.person_outline,
+          title: isIdentifier ? 'Tap distinctive words' : 'Counterparty (optional)',
+          subtitle: isIdentifier
               ? 'These words identify this kind of message so similar SMS '
                   'are auto-dismissed in future scans.'
               : 'Tap one or more words to mark the counterparty name.',
-          style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant),
         ),
         const SizedBox(height: 16),
         if (tokens.isEmpty)

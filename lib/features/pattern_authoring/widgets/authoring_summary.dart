@@ -3,6 +3,7 @@ import 'package:sms_transactions/core/extensions/build_context.dart';
 import 'package:sms_transactions/core/utils/currency.dart';
 import 'package:sms_transactions/domain/models/pattern_match.dart';
 import 'package:sms_transactions/domain/models/sms_pattern.dart';
+import 'package:sms_transactions/features/pattern_authoring/widgets/step_header.dart';
 
 /// Summary step (FR-014): a live preview of the annotated SMS with every
 /// extracted field value and its role clearly labeled.
@@ -26,11 +27,10 @@ class AuthoringSummary extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Review & save', style: context.textTheme.titleMedium),
-        const SizedBox(height: 4),
-        Text(
-          'Here is how this sender will be parsed.',
-          style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant),
+        StepHeader(
+          icon: Icons.fact_check_outlined,
+          title: 'Review & save',
+          subtitle: 'Here is how this sender will be parsed.',
         ),
         const SizedBox(height: 16),
         Card(

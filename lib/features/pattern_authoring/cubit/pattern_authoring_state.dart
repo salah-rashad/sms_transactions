@@ -54,6 +54,7 @@ class PatternAuthoringState {
   });
 
   bool get isEditMode => editing != null;
+  bool get isDirection => currentStep == AuthoringStep.direction;
   bool get isSummary => currentStep == AuthoringStep.summary;
   bool get isSaving => status == PatternAuthoringStatus.saving;
   bool get isSaved => status == PatternAuthoringStatus.saved;
@@ -101,7 +102,7 @@ class PatternAuthoringState {
 
   /// Count of pickable steps (excludes the summary) for the "Step X of N"
   /// header.
-  int get selectionStepCount => activeSteps.length - 1;
+  int get selectionStepCount => activeSteps.length;
 
   /// Whether the current step's required input is satisfied (enables Continue).
   bool get canContinueCurrentStep {
@@ -113,9 +114,7 @@ class PatternAuthoringState {
       case AuthoringStep.balance:
         // Required when balance is the primary value (balanceCheck), optional
         // otherwise.
-        return direction == SmsDirection.balanceCheck
-            ? balance != null
-            : true;
+        return direction == SmsDirection.balanceCheck ? balance != null : true;
       case AuthoringStep.counterparty:
         // Required when counterparty is the primary identifier (ignore),
         // optional otherwise.
@@ -163,8 +162,9 @@ class PatternAuthoringState {
       balance: clearBalance ? null : (balance ?? this.balance),
       direction: clearDirection ? null : (direction ?? this.direction),
       counterpartyTokens: resolvedTokens,
-      counterparty:
-          clearCounterparty ? null : (counterparty ?? this.counterparty),
+      counterparty: clearCounterparty
+          ? null
+          : (counterparty ?? this.counterparty),
       preview: clearPreview ? null : (preview ?? this.preview),
       autoNextSms: clearAutoNext ? null : (autoNextSms ?? this.autoNextSms),
       status: status ?? this.status,

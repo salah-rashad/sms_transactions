@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:sms_transactions/core/extensions/build_context.dart';
 import 'package:sms_transactions/core/theme/app_colors.dart';
 import 'package:sms_transactions/domain/models/sms_pattern.dart';
+import 'package:sms_transactions/features/pattern_authoring/widgets/step_header.dart';
 import 'package:sms_transactions/features/pattern_authoring/widgets/token_chip.dart';
 
 /// Step 1: classify the message (income / expense / balance check / ignore).
@@ -24,14 +25,10 @@ class StepDirection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Transaction direction', style: context.textTheme.titleMedium),
-        const SizedBox(height: 4),
-        Text(
-          'How should this message be counted?',
-          style: TextStyle(
-            fontSize: 12,
-            color: scheme.onSurfaceVariant,
-          ),
+        StepHeader(
+          icon: Icons.alt_route,
+          title: 'Transaction direction',
+          subtitle: 'How should this message be counted?',
         ),
         const SizedBox(height: 12),
         Container(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sms_transactions/core/extensions/build_context.dart';
 import 'package:sms_transactions/domain/models/sms_token.dart';
+import 'package:sms_transactions/features/pattern_authoring/widgets/step_header.dart';
 import 'package:sms_transactions/features/pattern_authoring/widgets/token_chip.dart';
 
 /// Step 1 (FR-008/009): renders the SMS body with every numeric token as a
@@ -24,18 +25,14 @@ class StepAmount extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = context.colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Tap the transaction amount',
-          style: context.textTheme.titleMedium,
-        ),
-        const SizedBox(height: 4),
-        Text(
-          'De-emphasized numbers look like OTPs, references, or phone numbers.',
-          style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant),
+        StepHeader(
+          icon: Icons.payments_outlined,
+          title: 'Tap the transaction amount',
+          subtitle:
+              'De-emphasized numbers look like OTPs, references, or phone numbers.',
         ),
         const SizedBox(height: 16),
         _tokenBody(context),

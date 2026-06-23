@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sms_transactions/core/extensions/build_context.dart';
 import 'package:sms_transactions/domain/models/sms_token.dart';
+import 'package:sms_transactions/features/pattern_authoring/widgets/step_header.dart';
 import 'package:sms_transactions/features/pattern_authoring/widgets/token_chip.dart';
 
 /// Balance picker step. Used both as the optional running-balance step for
@@ -32,20 +33,15 @@ class StepBalance extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = context.colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          isPrimary ? 'Tap the balance' : 'Tap the running balance',
-          style: context.textTheme.titleMedium,
-        ),
-        const SizedBox(height: 4),
-        Text(
-          isPrimary
+        StepHeader(
+          icon: Icons.account_balance_wallet_outlined,
+          title: isPrimary ? 'Tap the balance' : 'Tap the running balance',
+          subtitle: isPrimary
               ? 'This message has no transaction amount — only the balance.'
               : 'Optional — skip if this message has no balance.',
-          style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant),
         ),
         const SizedBox(height: 16),
         if (_selectable.isEmpty)
