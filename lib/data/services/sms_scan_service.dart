@@ -253,13 +253,22 @@ class SmsScanService {
       emoji: '♻️',
     );
 
+    // Resolve the transient body for each unmatched SMS once (privacy I:
+    // bodies are never persisted, so they come from the scan cache or
+    // caller-supplied extras). Attach it to the records we return so callers
+    // (e.g. the authoring wizard's auto-next) can display/teach from them.
+    final bodies = <String, String>{
+      for (final u in unmatched)
+        u.smsId: extraBodies[u.smsId] ?? _bodyCache[u.smsId] ?? u.body ?? '',
+    };
+
     final smsInputs = <_SmsInput>[];
     final remaining = <UnmatchedSms>[];
     for (final u in unmatched) {
-      final body = extraBodies[u.smsId] ?? _bodyCache[u.smsId] ?? u.body ?? '';
+      final body = bodies[u.smsId]!;
       if (body.isEmpty) {
         // Can't re-match without a body — leave in the queue for the next scan.
-        remaining.add(u);
+        remaining.add(u.copyWith(body: body));
         continue;
       }
       smsInputs.add(_SmsInput(
@@ -299,7 +308,7 @@ class SmsScanService {
     for (final u in unmatched) {
       if (!matchedIds.contains(u.smsId) &&
           !remaining.any((r) => r.smsId == u.smsId)) {
-        remaining.add(u);
+        remaining.add(u.copyWith(body: bodies[u.smsId]));
       }
     }
     Logger.data(
