@@ -102,7 +102,6 @@ class PatternAuthoringState {
         return const [
           AuthoringStep.direction,
           AuthoringStep.balance,
-          AuthoringStep.counterparty,
           AuthoringStep.summary,
         ];
       case SmsDirection.ignore:

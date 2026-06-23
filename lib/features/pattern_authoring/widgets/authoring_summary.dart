@@ -64,14 +64,15 @@ class AuthoringSummary extends StatelessWidget {
                   icon: _directionIcon(direction),
                   color: scheme.primary,
                 ),
-                _Field(
-                  label: 'Counterparty',
-                  value: (preview?.counterparty?.isNotEmpty ?? false)
-                      ? preview!.counterparty!
-                      : '—',
-                  icon: Icons.person_outline,
-                  color: scheme.primary,
-                ),
+                if (preview?.counterparty != null)
+                  _Field(
+                    label: 'Counterparty',
+                    value: (preview?.counterparty?.isNotEmpty ?? false)
+                        ? preview!.counterparty!
+                        : '—',
+                    icon: Icons.person_outline,
+                    color: scheme.primary,
+                  ),
               ],
             ),
           ),

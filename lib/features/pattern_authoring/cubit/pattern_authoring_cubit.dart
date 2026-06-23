@@ -15,7 +15,7 @@ import 'package:sms_transactions/features/pattern_authoring/cubit/pattern_author
 /// Step order is computed from the chosen direction (see
 /// [PatternAuthoringState.activeSteps]):
 ///   * income / expense → direction → amount → balance? → counterparty? → summary
-///   * balanceCheck     → direction → balance → counterparty? → summary
+///   * balanceCheck     → direction → balance → summary
 ///   * ignore           → direction → counterparty → summary
 ///
 /// On save, the pattern is persisted, the example is parsed (skipped for
@@ -243,7 +243,7 @@ class PatternAuthoringCubit extends Cubit<PatternAuthoringState> {
   }
 
   /// Confirm the counterparty step (also used to advance from an empty
-  /// selection in income/expense + balanceCheck flows, where it's optional).
+  /// selection in income/expense flows, where it's optional).
   void confirmCounterparty() {
     Logger.data(
       'Authoring.confirm',
